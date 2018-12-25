@@ -146,10 +146,12 @@ body {
 
 /* 按钮 */
 .myAntd_btn {
+  display: inline-block;
+  vertical-align: middle;
   width: 80px;
   height: 36px;
+  line-height: 36px;
   border-radius: 4px;
-  padding: 0 15px;
   text-align: center;
   font-weight: 400;
   font-size: 22px;
