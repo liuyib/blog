@@ -1,4 +1,7 @@
 window.onload = function() {
+  var oSkelentonWrapper = document.getElementById('skelenton_wrapper');
+  oSkelentonWrapper.outerHTML = '';
+  
   var oOkBtn = document.getElementById("oOkBtn");
   oOkBtn.onmousedown = function() {
     this.className = "myAntd_btn myAntd_btn_primary";

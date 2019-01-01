@@ -1,55 +1,106 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="X-UA-Compatible" content="ie=edge">
-  <title>liuyibo - clear html tag</title>
-  <link rel="shortcut icon" href="./imgs/j_ico.ico" type="image/x-icon">
-  <link rel="stylesheet" href="./index.min.css" type="text/css">
-  <script async src="./index.min.js" type="text/javascript"></script>
-</head>
-<body>
-  <div class="wrapper">
-    <a href="https://github.com/liuyib/" target="_blank">
-      <img class="fork_me_on_github" src="./imgs/fork_me_on_github.png" alt="Fork me on GitHub" />
-    </a>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>liuyibo - clear html tag</title>
+    <link rel="shortcut icon" href="./imgs/j_ico.ico" type="image/x-icon" />
+    <link rel="stylesheet" href="./index.min.css" type="text/css" />
+    <script src="./index.min.js" type="text/javascript"></script>
 
-    <div class="main">
-      <h1 class="main_title title_after">clear html tag</h1>
-    
-      <div class="main_textarea">
-        <div class="main_textarea_wrapper">
-          <div>Before</div>
-          <!-- 仿antd样式 -->
-          <textarea id="oTextareaBefore" class="myAntd_input_textarea" rows="14"></textarea>
+    <style>
+      .skelenton_wrapper {
+        z-index: 9;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: #fff;
+      }
+      .skelenton_wrapper img {
+        z-index: 10;
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: calc(50% - 24px);
+        width: 48px;
+        height: 48px;
+        margin: 0 auto;
+        animation: loading_spin 1.2s infinite linear;
+      }
+
+      @keyframes loading_spin {
+        50% {
+          transform: rotateZ(180deg);
+        }
+        100% {
+          transform: rotateZ(360deg);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- 加载logo -->
+    <div id="skelenton_wrapper" class="skelenton_wrapper">
+      <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADd0lEQVRoge1Zy42rMBSlBEqgBErIcsJsKCElpILBHZgOUoIZ5ZFZUoIVXgFWmEVecKQrMNJIGSLeAhIxM/n4p1nlSGcZ+1z73I+J41wAQOfy6jDn4ki5OFJet7CvW7avW7KrPtEWPrxLvzMBoeAu1xVa5SJL/wqa5gLSvGFpLkia1zPphTh8TvZ1y3jddjdZHea2hK/yBveCRXeLy3WFri4E0LlcHPFd4WOKIzW5jZQ2/ioX2T3hY65ykV1cTFn8wH3dMh3xhII7WEVa/NUgdnUb6ogf3QRWPv28WeiIP/HPuuotDNC5vG7BKIC67Uo4+NLiaeObiB8IhILr8OowNxU/WInIBrBcV8hCAP0t7OuW2AiA1y0o2IfZCCDNBXGkSqYkATpXLgAr4rs0F+DY8L9KHljy/5lWA5DpCYSCay+AhjnDqPBrAQwWutt1pfhXUO0GZlKFTHvAict1hU59wPwGFGajJRUTKzdAmz7nTHuByumfb0FzjBj5f/FlQYNcANnyOcYbBc8keQmFr3tu4cPT6AlQ1oeZqvgT9KzUsCUVk6uLKiR1ZuNhk9LGl7XTKhfZj5O/hBIO/r5uF5dOnNdtZusxM8Yqr8Mr1QlWucjOCauKLXx4HD4nJRx8Ha/r4I2Cl9LGlzrtBx544IEHHriFEDM3wMx/wsz7rT0RAReRrf5+T5hNnuMCB3EBQVx030gCXMysqR2AyHYSvXIcJSVESdmNyKJXjqUCCjFzbwj/zsXdBeWEe1HCyTfRV8ivvzueMPOC+J1KCB8TnjCb6Isv/Qsnfo8UkfLnYBfEBVEUfw4ixEx56OpPXln82VZfFpvizVxT/DkvVAOIkjLTFH9ib+HeOlKev8kpLkL509+FhuK7KCk7RLaeE+ANMhWvegvySXubL2SHTLz/g7K5ECUlsxFAlJSZE8QFsxVAgNndZx8i4FoS30VJCY4N/58oU1KH6mMrgM7qDciMG5ZvgDnTuMgsBSD9B0ekX/8v5AAuZr9fhcqFtSoUYubayAOVkcJSHsB5wJviIjQR/xwXyn+zGveCV/51z0C/HzC9WQjcSL8fZIh8++g1WGmhIn4aF5nJQ2ewEjUWP4ZkUsMUb+Y6J38JkkkN/cNG4nNjiJk7xZv5UGJPCQ5B/E4DvEEyHVcViGy9F7JDUT+lsrPopKSI/JtfE/4faB+2XbEWEPEAAAAASUVORK5CYII=" alt="">
+    </div>
+  
+    <div class="wrapper">
+      <a href="https://github.com/liuyib/liuyib.github.io/tree/master/pages/clearHtmlTag" target="_blank" >
+        <img class="fork_me_on_github" src="./imgs/fork_me_on_github.png" alt="fork me on github" />
+      </a>
+
+      <div class="main">
+        <h1 class="main_title title_after">clear html tag</h1>
+
+        <div class="main_textarea">
+          <div class="main_textarea_wrapper">
+            <div>Before</div>
+            <!-- 仿antd样式 -->
+            <textarea
+              id="oTextareaBefore"
+              class="myAntd_input_textarea"
+              rows="14"
+            ></textarea>
+          </div>
+
+          <div class="main_textarea_wrapper">
+            <div>After</div>
+            <!-- 仿antd样式 -->
+            <textarea
+              id="oTextareaAfter"
+              class="myAntd_input_textarea"
+              rows="14"
+            ></textarea>
+          </div>
         </div>
 
-        <div class="main_textarea_wrapper">
-          <div>After</div>
+        <div class="button_wrapper">
           <!-- 仿antd样式 -->
-          <textarea id="oTextareaAfter" class="myAntd_input_textarea" rows="14"></textarea>
-        </div>
-      </div>
-
-      <div class="button_wrapper">
-        <!-- 仿antd样式 -->
-        <label class="myAntd_checkbox_wrapper">
-          <span class="myAntd_checkbox">
-              <input id="oCheckbox" class="myAntd_checkbox_input" type="checkbox" />
+          <label class="myAntd_checkbox_wrapper">
+            <span class="myAntd_checkbox">
+              <input
+                id="oCheckbox"
+                class="myAntd_checkbox_input"
+                type="checkbox"
+              />
               <span class="myAntd_checkbox_inner"></span>
-          </span>
-          remove whitespace
-        </label>
-        
-        <!-- 仿antd样式 -->
-        <div id="oOkBtn" class="myAntd_btn myAntd_btn_primary">OK</div>
+            </span>
+            remove whitespace
+          </label>
+
+          <!-- 仿antd样式 -->
+          <div id="oOkBtn" class="myAntd_btn myAntd_btn_primary">OK</div>
+        </div>
+      </div>
+
+      <div class="bottom">
+        Powered by
+        <div class="bottom_heart">❤️</div>
+        liuyibo
       </div>
     </div>
-
-    <div class="bottom">
-      Powered by<div class="bottom_heart">❤️</div> liuyibo
-    </div>
-  </div>
-</body>
+  </body>
 </html>
