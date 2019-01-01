@@ -19,7 +19,7 @@
         height: 100vh;
         background: #fff;
       }
-      .skelenton_wrapper img {
+      .skelenton_wrapper div {
         z-index: 10;
         position: absolute;
         left: 0;
@@ -27,24 +27,33 @@
         top: calc(50% - 24px);
         width: 48px;
         height: 48px;
+        line-height: 48px;
         margin: 0 auto;
+        font-size: 48px;
+      }
+
+      .skelenton_wrapper div span  {
+        display: inline-block;
         animation: loading_spin 1.2s infinite linear;
       }
 
       @keyframes loading_spin {
         50% {
+          -webkit-transform: rotateZ(180deg);
           transform: rotateZ(180deg);
+          transform-origin: center;
         }
         100% {
+          -webkit-transform: rotateZ(360deg);
           transform: rotateZ(360deg);
+          transform-origin: center;
         }
       }
     </style>
   </head>
   <body>
-    <!-- 加载logo -->
     <div id="skelenton_wrapper" class="skelenton_wrapper">
-      <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADd0lEQVRoge1Zy42rMBSlBEqgBErIcsJsKCElpILBHZgOUoIZ5ZFZUoIVXgFWmEVecKQrMNJIGSLeAhIxM/n4p1nlSGcZ+1z73I+J41wAQOfy6jDn4ki5OFJet7CvW7avW7KrPtEWPrxLvzMBoeAu1xVa5SJL/wqa5gLSvGFpLkia1zPphTh8TvZ1y3jddjdZHea2hK/yBveCRXeLy3WFri4E0LlcHPFd4WOKIzW5jZQ2/ioX2T3hY65ykV1cTFn8wH3dMh3xhII7WEVa/NUgdnUb6ogf3QRWPv28WeiIP/HPuuotDNC5vG7BKIC67Uo4+NLiaeObiB8IhILr8OowNxU/WInIBrBcV8hCAP0t7OuW2AiA1y0o2IfZCCDNBXGkSqYkATpXLgAr4rs0F+DY8L9KHljy/5lWA5DpCYSCay+AhjnDqPBrAQwWutt1pfhXUO0GZlKFTHvAict1hU59wPwGFGajJRUTKzdAmz7nTHuByumfb0FzjBj5f/FlQYNcANnyOcYbBc8keQmFr3tu4cPT6AlQ1oeZqvgT9KzUsCUVk6uLKiR1ZuNhk9LGl7XTKhfZj5O/hBIO/r5uF5dOnNdtZusxM8Yqr8Mr1QlWucjOCauKLXx4HD4nJRx8Ha/r4I2Cl9LGlzrtBx544IEHHriFEDM3wMx/wsz7rT0RAReRrf5+T5hNnuMCB3EBQVx030gCXMysqR2AyHYSvXIcJSVESdmNyKJXjqUCCjFzbwj/zsXdBeWEe1HCyTfRV8ivvzueMPOC+J1KCB8TnjCb6Isv/Qsnfo8UkfLnYBfEBVEUfw4ixEx56OpPXln82VZfFpvizVxT/DkvVAOIkjLTFH9ib+HeOlKev8kpLkL509+FhuK7KCk7RLaeE+ANMhWvegvySXubL2SHTLz/g7K5ECUlsxFAlJSZE8QFsxVAgNndZx8i4FoS30VJCY4N/58oU1KH6mMrgM7qDciMG5ZvgDnTuMgsBSD9B0ekX/8v5AAuZr9fhcqFtSoUYubayAOVkcJSHsB5wJviIjQR/xwXyn+zGveCV/51z0C/HzC9WQjcSL8fZIh8++g1WGmhIn4aF5nJQ2ewEjUWP4ZkUsMUb+Y6J38JkkkN/cNG4nNjiJk7xZv5UGJPCQ5B/E4DvEEyHVcViGy9F7JDUT+lsrPopKSI/JtfE/4faB+2XbEWEPEAAAAASUVORK5CYII=" alt="">
+      <div><span>🌀</span></div>
     </div>
   
     <div class="wrapper">
