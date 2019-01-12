@@ -1,0 +1,58 @@
+* {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  overflow: hidden;
+}
+
+#wrapper {
+  width: 700px;
+  height: 800px;
+  margin: 0 auto;
+  padding: 50px  0 0 0;
+}
+
+#small_img_wrapper,
+#large_img_wrapper {
+  position: relative;
+  float: left;
+}
+
+#large_img_wrapper {
+  margin: 0 0 0 90px;
+  width: 400px;
+  height: 400px;
+  overflow: hidden;
+  border: 1px solid #999;
+}
+
+#small_img {
+  width: 200px;
+  height: 200px;
+  box-sizing: border-box;
+  border: 1px solid #999;
+}
+
+#large_img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: none;
+  width: 800px;
+  height: 800px;
+  box-sizing: border-box;
+}
+
+/* 放大镜 */
+#magnifying_glass {
+  display: none;
+  position: absolute;
+  width: 100px;
+  height: 100px;
+  background: rgb(249, 249, 249, .5);
+  box-sizing: border-box;
+  border: 1px solid #a9a9a9;
+  cursor: move;
+}
