@@ -37,13 +37,41 @@ body {
   overflow-y: auto;
 }
 
+/* fork me on github */
 .fork_me_on_github {
-  z-index: -1;
   position: absolute;
   top: 0;
-  left: 0;
-  border: 0;
-  background: #fff;
+  right: 0;
+}
+
+#my_github {
+  color: #fff;
+  fill: #3291eb;
+  height: 80px;
+  width: 80px;
+  cursor: pointer;
+}
+
+#my_github:hover #octocat_tail {
+  animation: tail_shake .5s ease;
+}
+
+@keyframes tail_shake {
+  0% {
+    transform: rotateZ(0);
+  }
+  20% {
+    transform: rotateZ(-30deg);
+  }
+  40% {
+    transform: rotateZ(0);
+  }
+  60% {
+    transform: rotateZ(-35deg);
+  }
+  100% {
+    transform: rotateZ(0);
+  }
 }
 
 /* 内容 */
@@ -66,7 +94,7 @@ body {
 
 .main_title {
   margin: 0 auto;
-  padding: 90px 0 30px 0;
+  padding: 60px 0 30px 0;
   font-size: 30px;
   text-align: center;
 }

@@ -1,6 +1,6 @@
 window.onload = function() {
-  var oSkelentonWrapper = document.getElementById('skelenton_wrapper');
-  oSkelentonWrapper.outerHTML = '';
+  var oLoadWrapper = document.getElementById('oLoadWrapper');
+  oLoadWrapper.outerHTML = '';
   
   var oOkBtn = document.getElementById("oOkBtn");
   oOkBtn.onmousedown = function() {
