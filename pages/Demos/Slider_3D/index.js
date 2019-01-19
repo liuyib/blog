@@ -44,9 +44,9 @@ window.onload = function () {
   var aImgs = oImgsWrapper.getElementsByTagName('li');
 
   function _startMove() {
-    IMG_DATAS.forEach((item, index) => {
-      startMove(aImgs[index], item, null);
-    });
+    IMG_DATAS.forEach(function(item, index) {
+      startMove(aImgs[index], item);
+    })
   }
 
   // init
