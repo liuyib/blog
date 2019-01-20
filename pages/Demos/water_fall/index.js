@@ -5,21 +5,21 @@ window.onload = function () {
   waterFall(); // init
 
   function waterFall() {
-    var nGap = 10; // 图片间隙
-    var nImgWidth = aImgs[0].offsetWidth; // 图片宽度
-    var nClientWidth = getClient().width; // 可视区宽度
+    var nGap = 10;                                              // 图片间隙
+    var nImgWidth = aImgs[0].offsetWidth;                       // 图片宽度
+    var nClientWidth = getClient().width;                       // 可视区宽度
     var nColumns = parseInt(nClientWidth / (nImgWidth + nGap)); // 列数
-    var aImgHeights = []; // 储存每列图片的总高度
+    var aImgHeights = [];                     // 储存每列图片的总高度
     
     for (var i = 0; i < aImgs.length; i++) {
       var nImgHeight = aImgs[i].offsetHeight; // 当前图片的高度
 
-      if (i < nColumns) { // 第一行图片
+      if (i < nColumns) {                     // 第一行图片
         aImgs[i].style.top = 0;
         aImgs[i].style.left = (nImgWidth + nGap) * i + 'px';
         aImgHeights.push(nImgHeight);
       } else {
-        var nMinHeight = getMinNum(aImgHeights); // 获取数组中最小高度
+        var nMinHeight = getMinNum(aImgHeights);         // 获取数组中最小高度
         var nMinIndex = aImgHeights.indexOf(nMinHeight); // 最小高度的索引
         var nImgLeft = aImgs[nMinIndex].offsetLeft;
         var nImgTop = aImgHeights[nMinIndex] + nGap;
@@ -35,9 +35,9 @@ window.onload = function () {
     }
   }
 
-window.onresize = function() {
-  waterFall();
-}
+  window.onresize = function() {
+    waterFall();
+  }
 
   var bFlag = false;
 
