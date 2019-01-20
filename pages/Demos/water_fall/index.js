@@ -12,46 +12,45 @@ window.onload = function () {
     var aImgHeights = []; // 储存每列图片的总高度
     
     for (var i = 0; i < aImgs.length; i++) {
-      var _currHeight = aImgs[i].offsetHeight; // 当前图片的高度
+      var nImgHeight = aImgs[i].offsetHeight; // 当前图片的高度
 
       if (i < nColumns) { // 第一行图片
         aImgs[i].style.top = 0;
         aImgs[i].style.left = (nImgWidth + nGap) * i + 'px';
-        aImgHeights.push(_currHeight);
-      } else { // 其他行
-        var minHeight = getMinNum(aImgHeights); // 获取数组中最小高度
-        var minIndex = aImgHeights.indexOf(minHeight); // 最小高度的索引
-        var _thisLeft = aImgs[minIndex].offsetLeft;
-        var _thisTop = aImgHeights[minIndex] + nGap;
+        aImgHeights.push(nImgHeight);
+      } else {
+        var nMinHeight = getMinNum(aImgHeights); // 获取数组中最小高度
+        var nMinIndex = aImgHeights.indexOf(nMinHeight); // 最小高度的索引
+        var nImgLeft = aImgs[nMinIndex].offsetLeft;
+        var nImgTop = aImgHeights[nMinIndex] + nGap;
 
         startMove(aImgs[i], {
-          left: _thisLeft,
-          top: _thisTop
+          left: nImgLeft,
+          top: nImgTop
         });
 
         // 添加新的图片后，更新数组中的最小高度
-        aImgHeights[minIndex] = minHeight + nGap + _currHeight;
+        aImgHeights[nMinIndex] = nMinHeight + nGap + nImgHeight;
       }
     }
   }
 
-  window.onresize = function() {
-    waterFall();
-  }
+window.onresize = function() {
+  waterFall();
+}
 
-  var flag = false;
-  
+  var bFlag = false;
+
   window.onscroll = function() {
-    if (flag) { return; }
+    if (bFlag) { return; }
     
     if (getClient().height + getScrollTop() >= aImgs[aImgs.length - 1].offsetTop) {
-      flag = true;
+      bFlag = true;
 
       newImgs.forEach(function(item) {
         var oImg = document.createElement('img');
         oImg.src = item;
         oImg.alt = "new_img";
-        oImg.style.opacity = 0;
         oWrapper.appendChild(oImg);
       });
     }
@@ -59,12 +58,6 @@ window.onload = function () {
     // 延迟加载，否则图片没加载出来时，获取不到图片的高度
     setTimeout(function() {
       waterFall();
-
-      setTimeout(function() {
-        for (var i = 0; i < aImgs.length; i++) {
-          aImgs[i].style.opacity = 1;
-        }
-      }, 800);
     }, 1000);
   };
 

@@ -1,17 +1,13 @@
 * {
   margin: 0;
   padding: 0;
-  box-sizing: border-box;
 }
 
 body {
-  overflow-x: hidden;
   background: #eee;
 }
 
 .imgs_wrapper img {
   position: absolute;
-  left: 0;
-  top: 0;
   width: 236px;
 }
