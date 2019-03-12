@@ -1,6 +1,6 @@
 ### 清除字符串中的html标签
 
-Demo体验地址：[https://liuyibo.top/pages/clearHtmlTag/](https://liuyibo.top/pages/clearHtmlTag/)
+Demo体验地址：[https://liuyib.github.io/pages/clearHtmlTag/](https://liuyib.github.io/pages/clearHtmlTag/)
 
 ---
 
