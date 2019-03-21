@@ -9,9 +9,8 @@ body {
 
 #wrapper {
   width: 700px;
-  height: 800px;
-  margin: 0 auto;
-  padding: 50px  0 0 0;
+  height: 400px;
+  margin: 10% auto;
 }
 
 #small_img_wrapper,

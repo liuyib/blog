@@ -6,10 +6,43 @@
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <title>Change HTML to Excel</title>
   <link rel="shortcut icon" href="../../../assets/j_ico.ico" type="image/x-icon">
+  <style>
+    #table_wrapper {
+      width: 600px;
+      text-align: center;
+      margin: 50px auto;
+    }
+    #table {
+      width: 600px;
+      border: 1px solid #000;
+      border-collapse: collapse;
+      margin: 0 0 20px 0;
+      font-size: 22px;
+    }
+    #table .title th{
+      height: 50px;
+      font-family: 'Arial';
+      font-weight: 600;
+    }
+    #table tr th {
+      height: 40px;
+      border: 1px solid #000;
+      background: #efefef;
+    }
+    #table tr td {
+      height: 40px;
+      padding: 0 40px;
+      border: 1px solid #000;
+      text-align: center;
+    }
+    #table .footer td {
+      font-weight: 600;
+    }
+  </style>
 </head>
 <body>
   <div id="table_wrapper">
-    <table bordercolor="black" class="tableA">
+    <table id="table">
       <tr class="title">
         <th colspan="4">学生信息</th>
       </tr>
@@ -41,9 +74,9 @@
         <td colspan="4">总人数：3人</td>
       </tr>
     </table>
+
+    <a id="down-file" href="#">点击下载文件</a>
   </div>
-  
-  <a id="down-file" href="#">点击下载文件</a>
   
   <script src="./index.js"></script>
 </body>
