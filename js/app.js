@@ -18,11 +18,6 @@ particlesJS("particles-js", {
       },
       "polygon": {
         "nb_sides": 5
-      },
-      "image": {
-        "src": "assets/xxxx.jpg",
-        "width": 100,
-        "height": 100
       }
     },
     "opacity": {
@@ -82,7 +77,7 @@ particlesJS("particles-js", {
     },
     "modes": {
       "grab": {
-        "distance": 200,  // 连接鼠标线条的范围
+        "distance": 300,  // 连接鼠标线条的范围
         "line_linked": {
           "opacity": 0.8
         }
