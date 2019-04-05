@@ -4,7 +4,7 @@
 
 - html转换为Excel：[https://liuyib.github.io/pages/demo/c-html-to-excel/](https://liuyib.github.io/pages/demo/c-html-to-excel/)
 - 放大镜效果：[https://liuyib.github.io/pages/demo/magnifying-glass/](https://liuyib.github.io/pages/demo/magnifying-glass/)
-- 3D 旋转轮播图：[https://liuyib.github.io/pages/demo/Slider-3D/](https://liuyib.github.io/pages/demo/Slider-3D/)
+- 3D 旋转轮播图：[https://liuyib.github.io/pages/demo/slider-3D/](https://liuyib.github.io/pages/demo/slider-3D/)
 - 图片瀑布流效果：[https://liuyib.github.io/pages/demo/water-fall/](https://liuyib.github.io/pages/demo/water-fall/)
 - 图片懒加载：[https://liuyib.github.io/pages/demo/lazy-load/](https://liuyib.github.io/pages/demo/lazy-load/)
 
