@@ -2,8 +2,6 @@ window.onload = function () {
   var oWrapper = document.getElementById('imgs-wrapper');
   var aImgs = oWrapper.getElementsByTagName('img');
 
-  waterFall(); // init
-
   function waterFall() {
     var nGap = 10;                                              // 图片间隙
     var nImgWidth = aImgs[0].offsetWidth;                       // 图片宽度
@@ -35,31 +33,11 @@ window.onload = function () {
     }
   }
 
-  window.onresize = function() {
-    waterFall();
-  }
+  // 初始化
+  waterFall();
 
-  var bFlag = false;
-
-  window.onscroll = function() {
-    if (bFlag) { return; }
-    
-    if (getClient().height + getScrollTop() >= aImgs[aImgs.length - 1].offsetTop) {
-      bFlag = true;
-
-      newImgs.forEach(function(item) {
-        var oImg = document.createElement('img');
-        oImg.src = item;
-        oImg.alt = "new_img";
-        oWrapper.appendChild(oImg);
-      });
-    }
-    
-    // 延迟加载，否则图片没加载出来时，获取不到图片的高度
-    setTimeout(function() {
-      waterFall();
-    }, 1000);
-  };
+  // 进行防抖处理
+  window.addEventListener('resize', debounce(waterFall, 300));
 
   // 模拟获取到的 Ajax 数据
   var newImgs = [
@@ -84,23 +62,26 @@ window.onload = function () {
     './imgs/19.jpg',
     './imgs/20.jpg'
   ];
+  var bFlag = false;
 
-  /**
-   * 获取数组中的最小数
-   * @param {Array} arr 数字数组
-   */
-  function getMinNum(arr) {
-    return Math.min.apply(Math, arr);
-  }
+  // 懒加载
+  window.onscroll = function() {
+    if (bFlag) { return; }
+    
+    if (getClient().height + getScrollTop() >= aImgs[aImgs.length - 1].offsetTop) {
+      bFlag = true;
 
-  function getScrollTop() {
-    return window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0
-  }
-
-  function getClient() {
-    return {
-      width: window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth || 0,
-      height: window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight || 0
-    };
-  }
+      newImgs.forEach(function(item) {
+        var oImg = document.createElement('img');
+        oImg.src = item;
+        oImg.alt = "new_img";
+        oWrapper.appendChild(oImg);
+      });
+    }
+    
+    // 延迟加载，否则图片没加载出来时，获取不到图片的高度
+    setTimeout(function() {
+      waterFall();
+    }, 1000);
+  };
 };
