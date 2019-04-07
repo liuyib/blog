@@ -20,14 +20,13 @@ window.onload = function () {
 
   // 节流函数
   function thorottle(func, wait) {
-    var context = this;
-    var args = arguments;
     var prev = 0;
 
     return function () {
       var now = +new Date();
+
       if (now - prev > wait) {
-        func.apply(context, args);
+        func.apply(this, arguments);
         prev = now;
       }
     };
