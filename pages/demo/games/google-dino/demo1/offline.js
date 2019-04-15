@@ -117,6 +117,8 @@
      * 更新游戏帧并进行下一次更新
      */
     update: function () {
+      this.updatePending = false; // 等待更新
+      
       var now = this.getTimeStamp();
       var deltaTime = now - (this.time || now);
 
@@ -140,7 +142,10 @@
         this.dimensions.HEIGHT);
     },
     scheduleNextUpdate: function () {
-      this.raqId = requestAnimationFrame(this.update.bind(this));
+      if (!this.updatePending) {
+        this.updatePending = true;
+        this.raqId = requestAnimationFrame(this.update.bind(this));
+      }
     },
     // 用来处理 EventTarget（这里就是 Runner 类） 上发生的事件
     // 当事件被发送到 EventListener 时，浏览器就会自动调用这个方法
