@@ -9,6 +9,10 @@
   box-sizing: border-box;
 }
 
+p {
+  text-align: center;
+}
+
 #chrome-dino {
   width: 100%;
   max-width: 600px;
