@@ -35,6 +35,8 @@
   // 游戏配置参数
   Runner.config = {
     SPEED: 6, // 移动速度
+    ARCADE_MODE_INITIAL_TOP_POSITION: 35,  // 街机模式时，canvas 距顶部的初始距离
+    ARCADE_MODE_TOP_POSITION_PERCENT: 0.1, // 街机模式时，canvas 距页面顶部的距离，占屏幕高度的百分比
   };
   
   // 游戏画布的默认尺寸
@@ -45,6 +47,7 @@
   
   // 游戏用到的 className
   Runner.classes = {
+    ARCADE_MODE: 'arcade-mode',
     CONTAINER: 'runner-container',
     CANVAS: 'runner-canvas',
     PLAYER: '', // 预留出的 className，用来控制 canvas 的样式
@@ -157,6 +160,8 @@
      * 更新游戏为开始状态
      */
     startGame: function () {
+      this.setArcadeMode();      // 进入街机模式
+      
       this.playingIntro = false; // 开场动画结束
       this.containerEl.style.webkitAnimation = '';
 
@@ -233,6 +238,31 @@
         this.updatePending = true;
         this.raqId = requestAnimationFrame(this.update.bind(this));
       }
+    },
+    /**
+     * 设置进入街机模式时 canvas 容器的缩放比例
+     */
+    setArcadeModeContainerScale: function () {
+      var windowHeight = window.innerHeight;
+      var scaleHeight = windowHeight / this.dimensions.HEIGHT;
+      var scaleWidth = window.innerWidth / this.dimensions.WIDTH;
+      var scale = Math.max(1, Math.min(scaleHeight, scaleWidth));
+      var scaledCanvasHeight = this.dimensions.HEIGHT * scale;
+
+      // 将 canvas 横向占满屏幕，纵向距离顶部 10% 窗口高度处
+      var translateY = Math.ceil(Math.max(0, (windowHeight - scaledCanvasHeight -
+          Runner.config.ARCADE_MODE_INITIAL_TOP_POSITION) *
+          Runner.config.ARCADE_MODE_TOP_POSITION_PERCENT)) *
+          window.devicePixelRatio;
+      this.containerEl.style.transform = 'scale(' + scale + ') translateY(' +
+          translateY + 'px)';
+    },
+    /**
+     * 开启街机模式（全屏）
+     */
+    setArcadeMode: function () {
+      document.body.classList.add(Runner.classes.ARCADE_MODE);
+      this.setArcadeModeContainerScale();
     },
     // 用来处理 EventTarget（这里就是 Runner 类） 上发生的事件
     // 当事件被发送到 EventListener 时，浏览器就会自动调用这个方法
