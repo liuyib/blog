@@ -66,6 +66,8 @@
   
   // 游戏中用到的事件
   Runner.events = {
+    KEYDOWN: 'keydown',
+    KEYUP: 'keyup',
     LOAD: 'load',
   };
 
@@ -91,6 +93,9 @@
 
       // 更新 canvas
       this.update();
+
+      // 开始监听用户动作
+      this.startListening();
     },
     loadImages() {
       // 图片在雪碧图中的坐标
@@ -107,6 +112,14 @@
           this.init.bind(this));
       }
     },
+    startListening: function () {
+      document.addEventListener(Runner.events.KEYDOWN, this);
+      document.addEventListener(Runner.events.KEYUP, this);
+    },
+    stopListening: function () {
+      document.removeEventListener(Runner.events.KEYDOWN, this);
+      document.removeEventListener(Runner.events.KEYUP, this);
+    },
     /**
      * 更新游戏帧并进行下一次更新
      */
@@ -118,11 +131,15 @@
 
       this.time = now;
 
-      this.clearCanvas();
-      this.horizon.update(deltaTime, this.currentSpeed);
+      if (this.playing) {
+        this.clearCanvas();
+        this.horizon.update(deltaTime, this.currentSpeed);
+      }
 
-      // 进行下一次更新
-      this.scheduleNextUpdate();
+      if (this.playing) {
+        // 进行下一次更新
+        this.scheduleNextUpdate();
+      }
     },
     clearCanvas: function () {
       this.ctx.clearRect(0, 0, this.dimensions.WIDTH,
@@ -133,6 +150,34 @@
         this.updatePending = true;
         this.raqId = requestAnimationFrame(this.update.bind(this));
       }
+    },
+    // 用来处理 EventTarget（这里就是 Runner 类） 上发生的事件
+    // 当事件被发送到 EventListener 时，浏览器就会自动调用这个方法
+    handleEvent: function (e) {
+      return (function (eType, events) {
+        switch (eType) {
+          case events.KEYDOWN:
+            this.onKeyDown(e);
+            break;
+          default:
+            break;
+        }
+      }.bind(this))(e.type, Runner.events);
+    },
+    onKeyDown: function (e) {
+      if (!this.crashed && !this.paused) {
+        if (Runner.keyCodes.JUMP[e.keyCode]) {
+          e.preventDefault();
+  
+          if (!this.playing) {
+            this.setPlayStatus(true);
+            this.update();
+          }
+        }
+      }      
+    },
+    setPlayStatus: function (isPlaying) {
+      this.playing = isPlaying;
     },
   };
   
