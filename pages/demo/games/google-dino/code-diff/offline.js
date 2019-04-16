@@ -57,6 +57,7 @@
   Runner.spriteDefinition = {
     LDPI: {
       HORIZON: { x: 2, y: 54 }, // 地面
+      CLOUD: {x: 86, y: 2},
     },
   };
   
@@ -92,7 +93,8 @@
       this.ctx.fill();
   
       // 加载背景类 Horizon
-      this.horizon = new Horizon(this.canvas, this.spriteDef);
+      this.horizon = new Horizon(this.canvas, this.spriteDef,
+        this.dimensions);
   
       // 将游戏添加到页面中
       this.outerContainerEl.appendChild(this.containerEl);
@@ -322,6 +324,16 @@
   function getTimeStamp() {
     return performance.now();
   }
+  
+  /**
+   * 获取 [min, max] 之间的随机数
+   * @param {Number} min 最小值
+   * @param {Number} max 最大值
+   * @return {Number}
+   */
+  function getRandomNum(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
 
   // ==========================================
 
@@ -430,15 +442,102 @@
   };
 
   /**
+   * 云朵类
+   * @param {HTMLCanvasElement} canvas 画布
+   * @param {Object} spritePos 图片在雪碧图中的位置信息
+   * @param {Number} containerWidth 容器的宽度
+   */
+  function Cloud(canvas, spritePos, containerWidth) {
+    this.canvas = canvas;
+    this.ctx = canvas.getContext('2d');
+    this.spritePos = spritePos;
+    this.containerWidth = containerWidth;
+
+    // 坐标
+    this.xPos = containerWidth;
+    this.yPos = 0;
+
+    // 该云朵是否需要删除
+    this.remove = false;
+    // 随机云朵之间的间隙
+    this.cloudGap = getRandomNum(Cloud.config.MIN_CLOUD_GAP,
+      Cloud.config.MAX_CLOUD_GAP);
+
+    this.init();
+  }
+
+  Cloud.config = {
+    WIDTH: 46,
+    HEIGHT: 14,
+    MIN_CLOUD_GAP: 100,   // 云之间的最小间隙
+    MAX_CLOUD_GAP: 400,   // 云之间的最大间隙
+    MIN_SKY_LEVEL: 71,    // 云的最小高度
+    MAX_SKY_LEVEL: 30,    // 云的最大高度
+    BG_CLOUD_SPEED: 0.2,  // 云的速度
+    CLOUD_FREQUENCY: 0.5, // 云的频率
+    MAX_CLOUDS: 6         // 云的最大数量
+  };
+
+  Cloud.prototype = {
+    init: function () {
+      this.yPos = getRandomNum(Cloud.config.MAX_SKY_LEVEL,
+        Cloud.config.MIN_SKY_LEVEL);
+      this.draw();
+    },
+    draw: function () {
+      this.ctx.save();
+  
+      var sourceWidth = Cloud.config.WIDTH;
+      var sourceHeight = Cloud.config.HEIGHT;
+      var outputWidth = sourceWidth;
+      var outputHeight = sourceHeight;
+  
+      this.ctx.drawImage(
+        Runner.imageSprite,
+        this.spritePos.x, this.spritePos.y,
+        sourceWidth, sourceHeight,
+        this.xPos, this.yPos,
+        outputWidth, outputHeight
+      );
+      
+      this.ctx.restore();
+    },
+    update: function (speed) {
+      if (!this.remove) {
+        this.xPos -= speed;
+        this.draw();
+  
+        // 云朵移出 canvas，将其删除
+        if (!this.isVisible()) {
+          this.remove = true;
+        }
+      }
+    },
+    // 云朵是否移出 canvas
+    isVisible: function () {
+      return this.xPos + Cloud.config.WIDTH > 0;
+    },
+  };
+
+  /**
    * Horizon 背景类
    * @param {HTMLCanvasElement} canvas 画布
    * @param {Object} spritePos 雪碧图中的位置
+   * @param {Object} dimensions 画布的尺寸
    */
-  function Horizon(canvas, spritePos) {
+  function Horizon(canvas, spritePos, dimensions) {
     this.canvas = canvas;
     this.ctx = this.canvas.getContext('2d');
     this.spritePos = spritePos;
-  
+    this.dimensions = dimensions;
+
+    // 云的频率
+    this.cloudFrequency = Cloud.config.CLOUD_FREQUENCY;
+
+    // 云
+    this.clouds = [];
+    this.cloudSpeed = Cloud.config.BG_CLOUD_SPEED;
+
     // 地面
     this.horizonLine = null;
   
@@ -447,10 +546,45 @@
 
   Horizon.prototype = {
     init: function () {
+      this.addCloud();
       this.horizonLine = new HorizonLine(this.canvas, this.spritePos.HORIZON);
     },
     update: function (deltaTime, currentSpeed) {
       this.horizonLine.update(deltaTime, currentSpeed);
+      this.updateCloud(deltaTime, currentSpeed);
+    },
+    addCloud: function () {
+      this.clouds.push(new Cloud(this.canvas, this.spritePos.CLOUD,
+        this.dimensions.WIDTH));
+    },
+    updateCloud: function (deltaTime, speed) {
+      var cloudSpeed = Math.ceil(deltaTime * this.cloudSpeed * speed / 1000);
+      var numClouds = this.clouds.length;
+  
+      if (numClouds) {
+        for (var i = numClouds - 1; i >= 0; i--) {
+          this.clouds[i].update(cloudSpeed);
+        }
+  
+        var lastCloud = this.clouds[numClouds - 1];
+  
+        // 检查是否需要添加新的云朵
+        // 添加云朵的条件：云朵数量少于最大数量、
+        // 最后一个云朵后面的空间大于它的间隙、
+        // 云朵出现频率符合要求
+        if (numClouds < Cloud.config.MAX_CLOUDS &&
+          (this.dimensions.WIDTH - lastCloud.xPos) > lastCloud.cloudGap &&
+          this.cloudFrequency > Math.random()) {
+          this.addCloud();
+        }
+  
+        // 删除 remove 属性为 true 的云朵
+        this.clouds = this.clouds.filter(function (item) {
+          return !item.remove;
+        });
+      } else {
+        this.addCloud();
+      }
     },
   };
 
