@@ -70,6 +70,8 @@
     KEYDOWN: 'keydown',
     KEYUP: 'keyup',
     LOAD: 'load',
+    BLUR: 'blur',
+    FOCUS: 'focus'
   };
 
   Runner.prototype = {
@@ -157,6 +159,37 @@
     startGame: function () {
       this.playingIntro = false; // 开场动画结束
       this.containerEl.style.webkitAnimation = '';
+
+      window.addEventListener(Runner.events.BLUR,
+        this.onVisibilityChange.bind(this));
+
+      window.addEventListener(Runner.events.FOCUS,
+        this.onVisibilityChange.bind(this));
+    },
+    /**
+     * 当页面失焦时，暂停游戏
+     */
+    onVisibilityChange: function (e) {
+      if (document.hidden || document.webkitHidden || e.type == 'blur' ||
+        document.visibilityState != 'visible') {
+        this.stop();
+      } else if (!this.crashed) {
+        this.play();
+      }
+    },
+    play: function () {
+      if (!this.crashed) {
+        this.setPlayStatus(true);
+        this.paused = false;
+        this.time = getTimeStamp();
+        this.update();
+      }
+    },
+    stop: function () {
+      this.setPlayStatus(false);
+      this.paused = true;
+      cancelAnimationFrame(this.raqId);
+      this.raqId = 0;
     },
     /**
      * 更新游戏帧并进行下一次更新
