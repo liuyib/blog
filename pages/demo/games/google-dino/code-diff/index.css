@@ -22,7 +22,7 @@
 .offline .runner-container {
   position: absolute;
   top: 35px;
-  width: 100%;
+  width: 44px;
   max-width: 600px;
   height: 150px;
   overflow: hidden;

@@ -66,6 +66,7 @@
   
   // 游戏中用到的事件
   Runner.events = {
+    ANIMATION_END: 'webkitAnimationEnd',
     KEYDOWN: 'keydown',
     KEYUP: 'keyup',
     LOAD: 'load',
@@ -121,6 +122,43 @@
       document.removeEventListener(Runner.events.KEYUP, this);
     },
     /**
+     * 游戏被激活时的开场动画
+     * 将 canvas 的宽度调整到最大
+     */
+    playIntro: function () {
+      if (!this.activated && !this.crashed) {
+        this.playingIntro = true; // 正在执行开场动画
+
+        // 定义 CSS 动画关键帧
+        var keyframes = '@-webkit-keyframes intro { ' +
+            'from { width:' + Trex.config.WIDTH + 'px }' +
+            'to { width: ' + this.dimensions.WIDTH + 'px }' +
+          '}';
+        // 将动画关键帧插入页面中的第一个样式表
+        document.styleSheets[0].insertRule(keyframes, 0);
+
+        this.containerEl.style.webkitAnimation = 'intro .4s ease-out 1 both';
+        this.containerEl.style.width = this.dimensions.WIDTH + 'px';
+
+        // 监听动画。当触发结束事件时，设置游戏为开始状态
+        this.containerEl.addEventListener(Runner.events.ANIMATION_END,
+          this.startGame.bind(this));
+
+        this.setPlayStatus(true); // 设置游戏为进行状态
+        this.activated = true;    // 游戏彩蛋被激活
+      } else if (this.crashed) {
+        // 这个 restart 方法的逻辑这里先不实现
+        this.restart();
+      }
+    },
+    /**
+     * 更新游戏为开始状态
+     */
+    startGame: function () {
+      this.playingIntro = false; // 开场动画结束
+      this.containerEl.style.webkitAnimation = '';
+    },
+    /**
      * 更新游戏帧并进行下一次更新
      */
     update: function () {
@@ -133,7 +171,19 @@
 
       if (this.playing) {
         this.clearCanvas();
-        this.horizon.update(deltaTime, this.currentSpeed);
+
+        // 刚开始 this.playingIntro 不存在 !this.playingIntro 为真
+        if (!this.playingIntro) {
+          this.playIntro(); // 执行开场动画
+        }
+
+        // 直到开场动画结束再移动地面
+        if (this.playingIntro) {
+          this.horizon.update(0, this.currentSpeed);
+        } else {
+          deltaTime = !this.activated ? 0 : deltaTime;
+          this.horizon.update(deltaTime, this.currentSpeed);
+        }
       }
 
       if (this.playing) {
@@ -339,5 +389,11 @@
     update: function (deltaTime, currentSpeed) {
       this.horizonLine.update(deltaTime, currentSpeed);
     },
+  };
+
+  function Trex() {}
+
+  Trex.config = {
+    WIDTH: 44,
   };
 })();
