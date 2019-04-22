@@ -200,6 +200,8 @@
       if (document.hidden || document.webkitHidden || e.type == 'blur' ||
         document.visibilityState != 'visible') {
         this.stop();
+
+        this.gameOver();
       } else if (!this.crashed) {
         this.play();
       }
@@ -272,6 +274,18 @@
         this.updatePending = true;
         this.raqId = requestAnimationFrame(this.update.bind(this));
       }
+    },
+    // 游戏结束
+    gameOver: function () {
+      this.stop();
+
+      if (this.distanceRan > this.highestScore) {
+        this.highestScore = Math.ceil(this.distanceRan);
+        this.distanceMeter.setHighScore(this.highestScore); // 保存最高分
+      }
+
+      // 重置时间
+      this.time = getTimeStamp();
     },
     /**
      * 设置进入街机模式时 canvas 容器的缩放比例
