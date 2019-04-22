@@ -25,6 +25,9 @@
     this.runningTime = 0;    // 游戏运行的时间
     this.msPerFrame = 1000 / FPS; // 每帧的时间
 
+    this.inverted = false;         // 是否开启夜晚模式
+    this.invertTimer = 0;          // 夜晚模式的时间
+
     this.activated  = false; // 游戏彩蛋是否被激活（没有被激活时，游戏不会显示出来）
     this.playing = false;    // 游戏是否进行中
     this.crashed = false;    // 小恐龙是否碰到了障碍物
@@ -49,6 +52,8 @@
     GAP_COEFFICIENT: 0.6,                  // 障碍物间隙系数
     MAX_OBSTACLE_DUPLICATION: 2,           // 障碍物相邻的最大重复数
     CLEAR_TIME: 3000,                      // 游戏开始后，等待三秒再绘制障碍物
+    INVERT_FADE_DURATION: 12000,             // 夜晚模式的持续时间
+    INVERT_DISTANCE: 100,                    // 触发夜晚模式的距离
   };
   
   // 游戏画布的默认尺寸
@@ -63,6 +68,7 @@
     CONTAINER: 'runner-container',
     CANVAS: 'runner-canvas',
     PLAYER: '', // 预留出的 className，用来控制 canvas 的样式
+    INVERTED: 'inverted',
   };
   
   // 雪碧图中图片的坐标信息
@@ -74,6 +80,8 @@
       CACTUS_LARGE: {x: 332, y: 2}, // 大仙人掌
       PTERODACTYL: {x: 134, y: 2},  // 翼龙
       TEXT_SPRITE: {x: 655, y: 2},  // 文字
+      MOON: {x: 484, y: 2},
+      STAR: {x: 645, y: 2},
     },
   };
   
@@ -247,7 +255,8 @@
           this.horizon.update(0, this.currentSpeed, hasObstacles);
         } else {
           deltaTime = !this.activated ? 0 : deltaTime;
-          this.horizon.update(deltaTime, this.currentSpeed, hasObstacles);
+          this.horizon.update(deltaTime, this.currentSpeed, hasObstacles,
+            this.inverted);
         }
 
         this.distanceRan += this.currentSpeed * deltaTime / this.msPerFrame;
@@ -258,6 +267,29 @@
 
         var playAchievementSound = this.distanceMeter.update(deltaTime,
           Math.ceil(this.distanceRan));
+
+        // 夜晚模式
+        if (this.invertTimer > this.config.INVERT_FADE_DURATION) { // 夜晚模式结束
+          this.invertTimer = 0;
+          this.invertTrigger = false;
+          this.invert();
+        } else if (this.invertTimer) { // 处于夜晚模式，更新其时间
+          this.invertTimer += deltaTime;
+        } else { // 还没进入夜晚模式
+          // 游戏移动的距离
+          var actualDistance =
+            this.distanceMeter.getActualDistance(Math.ceil(this.distanceRan));
+
+          if(actualDistance > 0) {
+            // 每移动指定距离就触发一次夜晚模式
+            this.invertTrigger = !(actualDistance % this.config.INVERT_DISTANCE);
+
+            if (this.invertTrigger && this.invertTimer === 0) {
+              this.invertTimer += deltaTime;
+              this.invert();
+            }
+          }
+        }
       }
 
       if (this.playing) {
@@ -311,6 +343,23 @@
     setArcadeMode: function () {
       document.body.classList.add(Runner.classes.ARCADE_MODE);
       this.setArcadeModeContainerScale();
+    },
+    /**
+     * 反转当前页面的颜色
+     * @param {Boolea} reset 是否重置颜色
+     */
+    invert: function (reset) {
+      var bodyElem = document.body;
+
+      if (reset) {
+        bodyElem.classList.toggle(Runner.classes.INVERTED, false); // 删除 className
+
+        this.invertTimer = 0;  // 重置夜晚模式的时间
+        this.inverted = false; // 关闭夜晚模式
+      } else {
+        this.inverted = bodyElem.classList.toggle(Runner.classes.INVERTED,
+          this.invertTrigger);
+      }
     },
     // 用来处理 EventTarget（这里就是 Runner 类） 上发生的事件
     // 当事件被发送到 EventListener 时，浏览器就会自动调用这个方法
@@ -929,6 +978,158 @@
   };
 
   /**
+   * 夜晚模式
+   * @param {HTMLCanvasElement} canvas 画布
+   * @param {Object} spritePos 雪碧图中的坐标信息
+   * @param {Number} containerWidth 容器宽度
+   */
+  function NightMode(canvas, spritePos, containerWidth) {
+    this.canvas = canvas;
+    this.ctx = this.canvas.getContext('2d');
+  
+    this.spritePos = spritePos;
+    this.containerWidth = containerWidth;
+  
+    this.xPos = containerWidth - 50; // 月亮的 x 坐标
+    this.yPos = 30;                  // 月亮的 y 坐标
+    this.currentPhase = 0;           // 月亮当前所处的时期
+    this.opacity = 0;
+    this.stars = [];                 // 存储星星
+    this.drawStars = false;          // 是否绘制星星
+    
+    // 放置星星
+    this.placeStars();
+  }
+
+  NightMode.config = {
+    WIDTH: 20,         // 半月的宽度
+    HEIGHT: 40,        // 月亮的高度
+    FADE_SPEED: 0.035, // 淡入淡出的速度
+    MOON_SPEED: 0.25,  // 月亮的速度
+    NUM_STARS: 2,      // 星星的数量
+    STAR_SIZE: 9,      // 星星的大小
+    STAR_SPEED: 0.3,   // 星星的速度
+    STAR_MAX_Y: 70,    // 星星在画布上的最大 y 坐标
+  };
+  
+  // 月亮所处的时期（不同的时期有不同的位置）
+  NightMode.phases = [140, 120, 100, 60, 40, 20, 0];
+
+  NightMode.prototype = {
+    draw: function () {
+      // 月期为 3 时，月亮为满月
+      var moonSourceWidth = this.currentPhase == 3 ? NightMode.config.WIDTH * 2 :
+          NightMode.config.WIDTH;
+      var moonSourceHeight = NightMode.config.HEIGHT;
+  
+      // 月亮在雪碧图中的 x 坐标
+      var moonSourceX = this.spritePos.x + NightMode.phases[this.currentPhase];
+      var moonOutputWidth = moonSourceWidth;
+      
+      // 星星在雪碧图中的 x 坐标
+      var starSourceX = Runner.spriteDefinition.LDPI.STAR.x;
+      var starSize = NightMode.config.STAR_SIZE;
+  
+      this.ctx.save();
+      this.ctx.globalAlpha = this.opacity; // 画布的透明度随之变化
+  
+      // 绘制星星
+      if (this.drawStars) {
+        for (var i = 0; i < NightMode.config.NUM_STARS; i++) {
+          this.ctx.drawImage(
+            Runner.imageSprite,
+            starSourceX, this.stars[i].sourceY,
+            starSize, starSize,
+            Math.round(this.stars[i].x), this.stars[i].y,
+            NightMode.config.STAR_SIZE, NightMode.config.STAR_SIZE,
+          );
+        }
+      }
+  
+      // 绘制月亮
+      this.ctx.drawImage(
+        Runner.imageSprite,
+        moonSourceX, this.spritePos.y,
+        moonSourceWidth, moonSourceHeight,
+        Math.round(this.xPos), this.yPos,
+        moonOutputWidth, NightMode.config.HEIGHT
+      );
+      
+      this.ctx.globalAlpha = 1;
+      this.ctx.restore();
+    },
+    /**
+      * 更新月亮位置，改变月期
+      * @param {Boolean} activated 是否夜晚模式被激活
+      */
+    update: function (activated) {
+      // 改变月期
+      if (activated && this.opacity === 0) {
+        this.currentPhase++;
+  
+        if (this.currentPhase >= NightMode.phases.length) {
+          this.currentPhase = 0;
+        }
+      }
+  
+      // 淡入
+      if (activated && (this.opacity < 1 || this.opacity === 0)) {
+        this.opacity += NightMode.config.FADE_SPEED;
+      } else if (this.opacity > 0) { // 淡出
+        this.opacity -= NightMode.config.FADE_SPEED;
+      }
+  
+      // 设置月亮和星星的位置
+      if (this.opacity > 0) {
+        // 更新月亮的 x 坐标
+        this.xPos = this.updateXPos(this.xPos, NightMode.config.MOON_SPEED);
+  
+        // 更新星星的 x 坐标
+        if (this.drawStars) {
+          for (var i = 0; i < NightMode.config.NUM_STARS; i++) {
+            this.stars[i].x = this.updateXPos(this.stars[i].x, 
+              NightMode.config.STAR_SPEED);
+          }
+        }
+  
+        this.draw();
+      } else {
+        this.opacity = 0;
+        this.placeStars();
+      }
+  
+      this.drawStars = true;
+    },
+    updateXPos: function (currentPos, speed) {
+      // 月亮移出画布半个月亮宽度，将其位置移动到画布右边
+      if (currentPos < -NightMode.config.WIDTH) {
+        currentPos = this.containerWidth;
+      } else {
+        currentPos -= speed;
+      }
+  
+      return currentPos;
+    },
+    placeStars: function () {
+      // 将画布分为若干组
+      var segmentSize = Math.round(this.containerWidth /
+        NightMode.config.NUM_STARS);
+  
+      for (var i = 0; i < NightMode.config.NUM_STARS; i++) {
+        this.stars[i] = {};
+  
+        // 分别随机每组画布中星星的位置
+        this.stars[i].x = getRandomNum(segmentSize * i, segmentSize * (i + 1));
+        this.stars[i].y = getRandomNum(0, NightMode.config.STAR_MAX_Y);
+  
+        // 星星在雪碧图中的 y 坐标
+        this.stars[i].sourceY = Runner.spriteDefinition.LDPI.STAR.y +
+            NightMode.config.STAR_SIZE * i;
+      }
+    },
+  };
+
+  /**
    * Horizon 背景类
    * @param {HTMLCanvasElement} canvas 画布
    * @param {Object} spritePos 雪碧图中的位置
@@ -952,6 +1153,9 @@
     this.clouds = [];
     this.cloudSpeed = Cloud.config.BG_CLOUD_SPEED;
 
+    // 夜晚模式
+    this.nightMode = null;
+
     // 地面
     this.horizonLine = null;
   
@@ -962,10 +1166,13 @@
     init: function () {
       this.addCloud();
       this.horizonLine = new HorizonLine(this.canvas, this.spritePos.HORIZON);
+      this.nightMode = new NightMode(this.canvas, this.spritePos.MOON,
+        this.dimensions.WIDTH);
     },
-    update: function (deltaTime, currentSpeed, updateObstacles) {
+    update: function (deltaTime, currentSpeed, updateObstacles, showNightMode) {
       this.horizonLine.update(deltaTime, currentSpeed);
       this.updateCloud(deltaTime, currentSpeed);
+      this.nightMode.update(showNightMode);
 
       if (updateObstacles) {
         this.updateObstacles(deltaTime, currentSpeed);
