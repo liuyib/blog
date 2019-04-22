@@ -14,12 +14,17 @@
   
     this.config = opt_config || Runner.config;
     this.dimensions = Runner.defaultDimensions;
+
+    this.distanceMeter = null;     // 距离计数类
+    this.distanceRan = 0;          // 游戏移动距离
+    this.highestScore = 0;         // 最高分
   
     this.time = 0;                         // 时钟计时器
     this.currentSpeed = this.config.SPEED; // 当前的速度
 
     this.runningTime = 0;    // 游戏运行的时间
-  
+    this.msPerFrame = 1000 / FPS; // 每帧的时间
+
     this.activated  = false; // 游戏彩蛋是否被激活（没有被激活时，游戏不会显示出来）
     this.playing = false;    // 游戏是否进行中
     this.crashed = false;    // 小恐龙是否碰到了障碍物
@@ -68,6 +73,7 @@
       CACTUS_SMALL: {x: 228, y: 2}, // 小仙人掌
       CACTUS_LARGE: {x: 332, y: 2}, // 大仙人掌
       PTERODACTYL: {x: 134, y: 2},  // 翼龙
+      TEXT_SPRITE: {x: 655, y: 2},  // 文字
     },
   };
   
@@ -105,6 +111,10 @@
       // 加载背景类 Horizon
       this.horizon = new Horizon(this.canvas, this.spriteDef,
         this.dimensions, this.config.GAP_COEFFICIENT);
+
+      // 加载距离计数器类 DistanceMeter
+      this.distanceMeter = new DistanceMeter(this.canvas,
+        this.spriteDef.TEXT_SPRITE, this.dimensions.WIDTH);
   
       // 将游戏添加到页面中
       this.outerContainerEl.appendChild(this.containerEl);
@@ -238,9 +248,14 @@
           this.horizon.update(deltaTime, this.currentSpeed, hasObstacles);
         }
 
+        this.distanceRan += this.currentSpeed * deltaTime / this.msPerFrame;
+
         if (this.currentSpeed < this.config.MAX_SPEED) {
           this.currentSpeed += this.config.ACCELERATION;
         }
+
+        var playAchievementSound = this.distanceMeter.update(deltaTime,
+          Math.ceil(this.distanceRan));
       }
 
       if (this.playing) {
@@ -702,8 +717,204 @@
       return this.xPos + this.width > 0;
     },
   };
+
   /**
-   * 
+   * 记录移动的距离（分数等于移动距离）
+   * @param {HTMLCanvasElement} canvas 画布
+   * @param {Object} spritePos 图片在雪碧图中的位置
+   * @param {Number} canvasWidth 画布的宽度
+   */
+  function DistanceMeter(canvas, spritePos, canvasWidth) {
+    this.canvas = canvas;
+    this.ctx = canvas.getContext('2d');
+  
+    this.config = DistanceMeter.config;
+    this.spritePos = spritePos;
+  
+    this.x = 0;               // 分数显示在 canvas 中的 x 坐标
+    this.y = 5;
+  
+    this.maxScore = 0;        // 游戏分数上限
+    this.highScore = [];      // 存储最高分数的每一位数字
+  
+    this.digits = [];         // 存储分数的每一位数字
+    this.achievement = false; // 是否进行闪动特效
+    this.defaultString = '';  // 游戏的默认距离（00000）
+    this.flashTimer = 0;      // 动画计时器
+    this.flashIterations = 0; // 特效闪动的次数
+  
+    this.maxScoreUnits = this.config.MAX_DISTANCE_UNITS; // 分数的最大位数
+  
+    this.init(canvasWidth);
+  }
+
+  DistanceMeter.config = {
+    MAX_DISTANCE_UNITS: 5,          // 分数的最大位数
+    ACHIEVEMENT_DISTANCE: 100,      // 每 100 米触发一次闪动特效
+    COEFFICIENT: 0.025,             // 将像素距离转换为比例单位的系数
+    FLASH_DURATION: 1000 / 4,       // 一闪的时间（一次闪动分别两闪：从有到无，从无到有）
+    FLASH_ITERATIONS: 3,            // 闪动的次数
+  };
+  
+  DistanceMeter.dimensions = {
+    WIDTH: 10,
+    HEIGHT: 13,
+    DEST_WIDTH: 11, // 加上间隔后每个数字的宽度
+  };
+
+  DistanceMeter.prototype = {
+    init: function (width) {
+      var maxDistanceStr = '';     // 游戏的最大距离
+  
+      this.calcXPos(width);        // 计算分数显示在 canvas 中的 x 坐标
+  
+      for (var i = 0; i < this.maxScoreUnits; i++) {
+        this.draw(i, 0);           // 第一次游戏，不绘制最高分
+        this.defaultString += '0'; // 默认初始分数 00000
+        maxDistanceStr += '9';     // 默认最大分数 99999
+      }
+      
+      this.maxScore = parseInt(maxDistanceStr);
+    },
+    calcXPos: function (canvasWidth) {
+      this.x = canvasWidth - (DistanceMeter.dimensions.DEST_WIDTH *
+        (this.maxScoreUnits + 1));
+    },
+    /**
+      * 将分数绘制到 canvas 上
+      * @param {Number} digitPos 数字在分数中的位置
+      * @param {Number} value 数字的具体值（0-9）
+      * @param {Boolean} opt_highScore 是否显示最高分
+      */
+    draw: function (digitPos, value, opt_highScore) {
+      // 在雪碧图中的坐标
+      var sourceX = this.spritePos.x + DistanceMeter.dimensions.WIDTH * value;
+      var sourceY = this.spritePos.y + 0;
+      var sourceWidth = DistanceMeter.dimensions.WIDTH;
+      var sourceHeight = DistanceMeter.dimensions.HEIGHT;
+  
+      // 绘制到 canvas 时的坐标
+      var targetX = digitPos * DistanceMeter.dimensions.DEST_WIDTH;
+      var targetY = this.y;
+      var targetWidth = DistanceMeter.dimensions.WIDTH;
+      var targetHeight = DistanceMeter.dimensions.HEIGHT;
+  
+      this.ctx.save();
+  
+      if (opt_highScore) { // 显示最高分
+        var hightScoreX = this.x - (this.maxScoreUnits * 2) *
+          DistanceMeter.dimensions.WIDTH;
+  
+        this.ctx.translate(hightScoreX, this.y);
+      } else {            // 不显示最高分
+        this.ctx.translate(this.x, this.y);
+      }
+  
+      this.ctx.drawImage(
+        Runner.imageSprite,
+        sourceX, sourceY,
+        sourceWidth, sourceHeight,
+        targetX, targetY,
+        targetWidth, targetHeight
+      );
+  
+      this.ctx.restore();
+    },
+    /**
+      * 将游戏移动的像素距离转换为真实的距离
+      * @param {Number} distance 游戏移动的像素距离
+      */
+    getActualDistance: function (distance) {
+      return distance ? Math.round(distance * this.config.COEFFICIENT) : 0;
+    },
+    update: function (deltaTime, distance) {
+      var paint = true;      // 是否绘制分数
+      var playSound = false; // 是否播放音效
+  
+      // 没有进行闪动特效
+      if (!this.achievement) {
+        distance = this.getActualDistance(distance);
+  
+        // 分数超出上限时，上限增加一位数。超出上限两位数时，分数置零
+        if (distance > this.maxScore &&
+          this.maxScoreUnits === this.config.MAX_DISTANCE_UNITS) {
+          this.maxScoreUnits++;
+          this.maxScore = parseInt(this.maxScore + '9');
+        } else {
+          this.distance = 0;
+        }
+  
+        if (distance > 0) {
+          // 触发闪动特效
+          if (distance % this.config.ACHIEVEMENT_DISTANCE == 0) {
+            this.achievement = true;
+            this.flashTimer = 0;
+            playSound = true;
+          }
+  
+          // 分数前面补零来凑位数
+          var distanceStr = (this.defaultString + distance).substr(-this.maxScoreUnits);
+          this.digits = distanceStr.split('');
+        } else {
+          // 将默认分数 00000 中的每一位数字存到数组中
+          this.digits = this.defaultString.split('');
+        }
+      } else {
+        // 控制特效的闪动次数
+        if (this.flashIterations <= this.config.FLASH_ITERATIONS) {
+          this.flashTimer += deltaTime;
+  
+          // 第一闪不绘制数字
+          if (this.flashTimer < this.config.FLASH_DURATION) {
+            paint = false;
+          }
+          // 进行了两闪，闪动次数加一
+          else if (this.flashTimer > this.config.FLASH_DURATION * 2) {
+            this.flashTimer = 0;
+            this.flashIterations++;
+          }
+        } else { // 闪动特效结束
+          this.achievement = false;
+          this.flashIterations = 0;
+          this.flashTimer = 0;
+        }
+      }
+  
+      // 绘制当前分
+      if (paint) {
+        for (var i = this.digits.length - 1; i >= 0; i--) {
+          this.draw(i, parseInt(this.digits[i]));
+        }
+      }
+  
+      // 绘制最高分
+      this.drawHighScore();
+      return playSound;
+    },
+    drawHighScore: function () {
+      this.ctx.save();
+      this.ctx.globalAlpha = 0.8;
+  
+      for (var i = this.highScore.length - 1; i >= 0; i--) {
+        this.draw(i, parseInt(this.highScore[i], 10), true);
+      }
+      this.ctx.restore();
+    },
+    /**
+      * 将游戏的最高分数存入数组
+      * @param {Number} distance 游戏移动的像素距离
+      */
+    setHighScore: function (distance) {
+      distance = this.getActualDistance(distance);
+      var highScoreStr = (this.defaultString
+        + distance).substr(-this.maxScoreUnits);
+      
+      // 分数前面字母 H、I 在雪碧图中位于数字后面，也就是第 10、11 位置
+      this.highScore = ['10', '11', ''].concat(highScoreStr.split(''));
+    },
+  };
+
+  /**
    * Horizon 背景类
    * @param {HTMLCanvasElement} canvas 画布
    * @param {Object} spritePos 雪碧图中的位置
