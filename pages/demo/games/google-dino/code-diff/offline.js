@@ -15,23 +15,23 @@
     this.config = opt_config || Runner.config;
     this.dimensions = Runner.defaultDimensions;
 
-    this.distanceMeter = null;     // 距离计数类
-    this.distanceRan = 0;          // 游戏移动距离
-    this.highestScore = 0;         // 最高分
+    this.distanceMeter = null;             // 距离计数类
+    this.distanceRan = 0;                  // 游戏移动距离
+    this.highestScore = 0;                 // 最高分
   
     this.time = 0;                         // 时钟计时器
     this.currentSpeed = this.config.SPEED; // 当前的速度
 
-    this.runningTime = 0;    // 游戏运行的时间
-    this.msPerFrame = 1000 / FPS; // 每帧的时间
+    this.runningTime = 0;                  // 游戏运行的时间
+    this.msPerFrame = 1000 / FPS;          // 每帧的时间
 
-    this.inverted = false;         // 是否开启夜晚模式
-    this.invertTimer = 0;          // 夜晚模式的时间
+    this.inverted = false;                 // 是否开启夜晚模式
+    this.invertTimer = 0;                  // 夜晚模式的时间
 
-    this.activated  = false; // 游戏彩蛋是否被激活（没有被激活时，游戏不会显示出来）
-    this.playing = false;    // 游戏是否进行中
-    this.crashed = false;    // 小恐龙是否碰到了障碍物
-    this.paused = false      // 游戏是否暂停
+    this.activated  = false;               // 游戏彩蛋是否被激活（没有被激活时，游戏不会显示出来）
+    this.playing = false;                  // 游戏是否进行中
+    this.crashed = false;                  // 小恐龙是否碰到了障碍物
+    this.paused = false                    // 游戏是否暂停
   
     // 加载雪碧图，并初始化游戏
     this.loadImages();
@@ -52,8 +52,8 @@
     GAP_COEFFICIENT: 0.6,                  // 障碍物间隙系数
     MAX_OBSTACLE_DUPLICATION: 2,           // 障碍物相邻的最大重复数
     CLEAR_TIME: 3000,                      // 游戏开始后，等待三秒再绘制障碍物
-    INVERT_FADE_DURATION: 12000,             // 夜晚模式的持续时间
-    INVERT_DISTANCE: 100,                    // 触发夜晚模式的距离
+    INVERT_FADE_DURATION: 12000,           // 夜晚模式的持续时间
+    INVERT_DISTANCE: 100,                  // 触发夜晚模式的距离
   };
   
   // 游戏画布的默认尺寸
@@ -74,7 +74,7 @@
   // 雪碧图中图片的坐标信息
   Runner.spriteDefinition = {
     LDPI: {
-      HORIZON: { x: 2, y: 54 }, // 地面
+      HORIZON: { x: 2, y: 54 },     // 地面
       CLOUD: {x: 86, y: 2},
       CACTUS_SMALL: {x: 228, y: 2}, // 小仙人掌
       CACTUS_LARGE: {x: 332, y: 2}, // 大仙人掌
