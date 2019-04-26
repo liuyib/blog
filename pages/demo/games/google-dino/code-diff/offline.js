@@ -18,6 +18,8 @@
     this.distanceMeter = null;             // 距离计数类
     this.distanceRan = 0;                  // 游戏移动距离
     this.highestScore = 0;                 // 最高分
+
+    this.tRex = null; // 小恐龙
   
     this.time = 0;                         // 时钟计时器
     this.currentSpeed = this.config.SPEED; // 当前的速度
@@ -54,6 +56,8 @@
     CLEAR_TIME: 3000,                      // 游戏开始后，等待三秒再绘制障碍物
     INVERT_FADE_DURATION: 12000,           // 夜晚模式的持续时间
     INVERT_DISTANCE: 100,                  // 触发夜晚模式的距离
+    BOTTOM_PAD: 10,                        // 小恐龙距 canvas 底部的距离
+    MAX_BLINK_COUNT: 3,                    // 小恐龙的最大眨眼次数
   };
   
   // 游戏画布的默认尺寸
@@ -82,6 +86,7 @@
       TEXT_SPRITE: {x: 655, y: 2},  // 文字
       MOON: {x: 484, y: 2},
       STAR: {x: 645, y: 2},
+      TREX: {x: 848, y: 2},         // 小恐龙
     },
   };
   
@@ -123,6 +128,9 @@
       // 加载距离计数器类 DistanceMeter
       this.distanceMeter = new DistanceMeter(this.canvas,
         this.spriteDef.TEXT_SPRITE, this.dimensions.WIDTH);
+      
+      // 加载小恐龙类
+      this.tRex = new Trex(this.canvas, this.spriteDef.TREX);
   
       // 将游戏添加到页面中
       this.outerContainerEl.appendChild(this.containerEl);
@@ -163,6 +171,7 @@
     playIntro: function () {
       if (!this.activated && !this.crashed) {
         this.playingIntro = true; // 正在执行开场动画
+        this.tRex.playingIntro = true; // 小恐龙执行开场动画
 
         // 定义 CSS 动画关键帧
         var keyframes = '@-webkit-keyframes intro { ' +
@@ -193,6 +202,7 @@
       this.setArcadeMode();      // 进入街机模式
       
       this.playingIntro = false; // 开场动画结束
+      this.tRex.playingIntro = false; // 小恐龙的开场动画结束
       this.containerEl.style.webkitAnimation = '';
 
       window.addEventListener(Runner.events.BLUR,
@@ -220,6 +230,7 @@
         this.paused = false;
         this.time = getTimeStamp();
         this.update();
+        this.tRex.reset();
       }
     },
     stop: function () {
@@ -242,11 +253,15 @@
       if (this.playing) {
         this.clearCanvas();
 
+        if (this.tRex.jumping) {
+          this.tRex.updateJump(deltaTime);
+        }
+
         this.runningTime += deltaTime;
         var hasObstacles = this.runningTime > this.config.CLEAR_TIME;
         
         // 刚开始 this.playingIntro 未定义 !this.playingIntro 为真
-        if (!this.playingIntro) {
+        if (this.tRex.jumpCount == 1 && !this.playingIntro) {
           this.playIntro(); // 执行开场动画
         }
 
@@ -292,7 +307,10 @@
         }
       }
 
-      if (this.playing) {
+      // 游戏变为开始状态或小恐龙还没有眨三次眼
+      if (this.playing || (!this.activated &&
+        this.tRex.blinkCount < Runner.config.MAX_BLINK_COUNT)) {
+        this.tRex.update(deltaTime);
         // 进行下一次更新
         this.scheduleNextUpdate();
       }
@@ -369,6 +387,9 @@
           case events.KEYDOWN:
             this.onKeyDown(e);
             break;
+          case events.KEYUP:
+            this.onKeyUp(e);
+            break;
           default:
             break;
         }
@@ -383,8 +404,36 @@
             this.setPlayStatus(true);
             this.update();
           }
+
+          // 开始跳跃
+          if (!this.tRex.jumping && !this.tRex.ducking) {
+            this.tRex.startJump(this.currentSpeed);
+          }
+        } else if (this.playing && Runner.keyCodes.DUCK[e.keyCode]) {
+          e.preventDefault();
+
+          if (this.tRex.jumping) {
+            this.tRex.setSpeedDrop(); // 加速下落
+          } else if (!this.tRex.jumping && !this.tRex.ducking) {
+            this.tRex.setDuck(true);  // 进入躲闪状态
+          }
         }
       }      
+    },
+    onKeyUp: function(e) {
+      var keyCode = String(e.keyCode);
+      var isjumpKey = Runner.keyCodes.JUMP[keyCode];
+  
+      if (this.isRunning() && isjumpKey) {        // 跳跃
+        this.tRex.endJump();
+      } else if (Runner.keyCodes.DUCK[keyCode]) { // 躲避状态
+        this.tRex.speedDrop = false;
+        this.tRex.setDuck(false);
+      }
+    },
+    // 是否游戏正在进行
+    isRunning: function() {
+      return !!this.raqId;
     },
     setPlayStatus: function (isPlaying) {
       this.playing = isPlaying;
@@ -778,6 +827,292 @@
     // 障碍物是否还在画布中
     isVisible: function () {
       return this.xPos + this.width > 0;
+    },
+  };
+
+  /**
+   * 小恐龙类
+   * @param {HTMLCanvasElement} canvas 画布
+   * @param {Object} spritePos 图片在雪碧图中的坐标
+   */
+  function Trex(canvas, spritePos) {
+    this.canvas = canvas;
+    this.ctx = canvas.getContext('2d');
+    this.spritePos = spritePos;
+
+    this.xPos = 0;
+    this.yPos = 0;
+    this.groundYPos = 0;               // 小恐龙在地面上时的 y 坐标
+
+    this.currentFrame = 0;             // 当前的动画帧
+    this.currentAnimFrames = [];       // 存储当前状态的动画帧在雪碧图中的 x 坐标
+    this.blinkDelay = 0;               // 眨眼间隔的时间（随 机）
+    this.blinkCount = 0;               // 眨眼次数
+    this.animStartTime = 0;            // 小恐龙眨眼动画开始时间
+    this.timer = 0;                    // 计时器
+    this.msPerFrame = 1000 / FPS;      // 帧率
+    this.status = Trex.status.WAITING; // 当前的状态
+    this.config = Trex.config;
+
+    this.jumping = false;              // 是否跳跃
+    this.ducking = false;              // 是否闪避（俯身）
+    this.jumpVelocity = 0;             // 跳跃的速度
+    this.reachedMinHeight = false;     // 是否达到最低高度
+    this.speedDrop = false;            // 是否加速下降
+    this.jumpCount = 0;                // 跳跃的次数
+    this.jumpspotX = 0;                // 跳跃点的 x 坐标
+
+    this.init();
+  }
+
+  Trex.config = {
+    GRAVITY: 0.6,               // 引力
+    WIDTH: 44,                  // 站立时的宽度
+    HEIGHT: 47,
+    WIDTH_DUCK: 59,             // 俯身时的宽度
+    HEIGHT_DUCK: 25,
+    MAX_JUMP_HEIGHT: 30,        // 最大跳跃高度
+    MIN_JUMP_HEIGHT: 30,        // 最小跳跃高度
+    SPRITE_WIDTH: 262,          // 站立的小恐龙在雪碧图中的总宽度
+    DROP_VELOCITY: -5,          // 下落的速度
+    INITIAL_JUMP_VELOCITY: -10, // 初始跳跃速度
+    SPEED_DROP_COEFFICIENT: 3,  // 下落时的加速系数（越大下落的越快）
+    INTRO_DURATION: 1500,       // 开场动画的时间
+    START_X_POS: 50,            // 开场动画结束后，小恐龙在 canvas 上的 x 坐标
+  };
+  
+  Trex.BLINK_TIMING = 7000;     // 眨眼最大间隔的时间
+  
+  // 小恐龙的状态
+  Trex.status = {
+    CRASHED: 'CRASHED', // 撞到障碍物
+    DUCKING: 'DUCKING', // 正在闪避（俯身）
+    JUMPING: 'JUMPING', // 正在跳跃
+    RUNNING: 'RUNNING', // 正在奔跑
+    WAITING: 'WAITING', // 正在等待（未开始游戏）
+  };
+  
+  // 为不同的状态配置不同的动画帧
+  Trex.animFrames = {
+    WAITING: {
+      frames: [44, 0],
+      msPerFrame: 1000 / 3
+    },
+    RUNNING: {
+      frames: [88, 132],
+      msPerFrame: 1000 / 12
+    },
+    CRASHED: {
+      frames: [220],
+      msPerFrame: 1000 / 60
+    },
+    JUMPING: {
+      frames: [0],
+      msPerFrame: 1000 / 60
+    },
+    DUCKING: {
+      frames: [264, 323],
+      msPerFrame: 1000 / 8
+    },
+  };
+
+  Trex.prototype = {
+    init: function() {
+      // 获取小恐龙站在地面上时的 y 坐标
+      this.groundYPos = Runner.defaultDimensions.HEIGHT - this.config.HEIGHT -
+          Runner.config.BOTTOM_PAD;
+      this.yPos = this.groundYPos; // 小恐龙的 y 坐标初始化
+      // 最低跳跃高度
+      this.minJumpHeight = this.groundYPos - this.config.MIN_JUMP_HEIGHT;
+  
+      this.draw(0, 0);             // 绘制小恐龙的第一帧图片
+      this.update(0, Trex.status.WAITING); // 初始为等待状态
+    },
+    /**
+     * 绘制小恐龙
+     * @param {Number} x 当前帧相对于第一帧的 x 坐标
+     * @param {Number} y 当前帧相对于第一帧的 y 坐标
+     */
+    draw: function(x, y) {
+      // 在雪碧图中的坐标
+      var sourceX = x + this.spritePos.x;
+      var sourceY = y + this.spritePos.y;
+  
+      // 在雪碧图中的宽高
+      var sourceWidth = this.ducking && this.status != Trex.status.CRASHED ?
+          this.config.WIDTH_DUCK : this.config.WIDTH;
+      var sourceHeight = this.config.HEIGHT;
+  
+      // 绘制到 canvas 上时的高度
+      var outputHeight = sourceHeight;
+  
+      // 躲避状态.
+      if (this.ducking && this.status != Trex.status.CRASHED) {
+        this.ctx.drawImage(
+          Runner.imageSprite,
+          sourceX, sourceY,
+          sourceWidth, sourceHeight,
+          this.xPos, this.yPos,
+          this.config.WIDTH_DUCK, outputHeight
+        );
+      } else {
+        // 躲闪状态下撞到障碍物
+        if (this.ducking && this.status == Trex.status.CRASHED) {
+          this.xPos++;
+        }
+        // 奔跑状态
+        this.ctx.drawImage(
+          Runner.imageSprite,
+          sourceX, sourceY,
+          sourceWidth, sourceHeight,
+          this.xPos, this.yPos,
+          this.config.WIDTH, outputHeight
+        );
+      }
+  
+      this.ctx.globalAlpha = 1;
+    },
+    /**
+     * 更新小恐龙
+     * @param {Number} deltaTime 间隔时间
+     * @param {String} opt_status 小恐龙的状态
+     */
+    update: function(deltaTime, opt_status) {
+      this.timer += deltaTime;
+
+      // 更新状态的参数
+      if (opt_status) {
+        this.status = opt_status;
+        this.currentFrame = 0;
+        this.msPerFrame = Trex.animFrames[opt_status].msPerFrame;
+        this.currentAnimFrames = Trex.animFrames[opt_status].frames;
+
+        if (opt_status == Trex.status.WAITING) {
+          this.animStartTime = getTimeStamp(); // 设置眨眼动画开始的时间
+          this.setBlinkDelay();                // 设置眨眼间隔的时间
+        }
+      }
+
+      // 正在执行开场动画，将小恐龙向右移动 50 像素
+      if (this.playingIntro && this.xPos < this.config.START_X_POS) {
+        this.xPos += Math.round((this.config.START_X_POS /
+          this.config.INTRO_DURATION) * deltaTime);
+      }
+
+      if (this.status == Trex.status.WAITING) {
+        // 小恐龙眨眼
+        this.blink(getTimeStamp());
+      } else {
+        // 绘制动画帧
+        this.draw(this.currentAnimFrames[this.currentFrame], 0);
+      }
+
+      if (this.timer >= this.msPerFrame) {
+        // 更新当前动画帧，如果处于最后一帧就更新为第一帧，否则更新为下一帧
+        this.currentFrame = this.currentFrame ==
+          this.currentAnimFrames.length - 1 ? 0 : this.currentFrame + 1;
+        // 重置计时器
+        this.timer = 0;
+      }
+    },
+    // 设置眨眼间隔的时间
+    setBlinkDelay: function() {
+      this.blinkDelay = Math.ceil(Math.random() * Trex.BLINK_TIMING);
+    },
+    // 小恐龙眨眼
+    blink: function (time) {
+      var deltaTime = time - this.animStartTime;
+      
+      // 间隔时间大于随机获取的眨眼间隔时间才能眨眼
+      if (deltaTime >= this.blinkDelay) {
+        this.draw(this.currentAnimFrames[this.currentFrame], 0);
+        
+        // 正在眨眼
+        if (this.currentFrame == 1) {
+          console.log('眨眼');
+          this.setBlinkDelay();      // 重新设置眨眼间隔的时间
+          this.animStartTime = time; // 更新眨眼动画开始的时间
+          this.blinkCount++;         // 眨眼次数加一
+        }
+      }
+    },
+    // 开始跳跃
+    startJump: function(speed) {
+      if (!this.jumping) {
+        // 更新小恐龙为跳跃状态 
+        this.update(0, Trex.status.JUMPING);
+        
+        // 根据游戏的速度调整跳跃的速度
+        this.jumpVelocity = this.config.INITIAL_JUMP_VELOCITY - (speed / 10);
+        
+        this.jumping = true;
+        this.reachedMinHeight = false;
+        this.speedDrop = false;
+      }
+    },
+    // 更新小恐龙跳跃时的动画帧
+    updateJump: function(deltaTime) {
+      var msPerFrame = Trex.animFrames[this.status].msPerFrame; // 获取当前状态的帧率
+      var framesElapsed = deltaTime / msPerFrame;
+
+      // 加速下落
+      if (this.speedDrop) {
+        this.yPos += Math.round(this.jumpVelocity *
+          this.config.SPEED_DROP_COEFFICIENT * framesElapsed);
+      } else {
+        this.yPos += Math.round(this.jumpVelocity * framesElapsed);
+      }
+
+      // 跳跃的速度受重力的影响，向上逐渐减小，然后反向
+      this.jumpVelocity += this.config.GRAVITY * framesElapsed;
+
+      // 达到了最低允许的跳跃高度
+      if (this.yPos < this.minJumpHeight || this.speedDrop) {
+        this.reachedMinHeight = true;
+      }
+
+      // 达到了最高允许的跳跃高度
+      if (this.yPos < this.config.MAX_JUMP_HEIGHT || this.speedDrop) {
+        this.endJump(); // 结束跳跃
+      }
+
+      // 重新回到地面，跳跃完成
+      if (this.yPos > this.groundYPos) {
+        this.reset();     // 重置小恐龙的状态
+        this.jumpCount++; // 跳跃次数加一
+      }
+    },
+    // 跳跃结束
+    endJump: function() {
+      if (this.reachedMinHeight &&
+          this.jumpVelocity < this.config.DROP_VELOCITY) {
+        this.jumpVelocity = this.config.DROP_VELOCITY; // 下落速度重置为默认
+      }
+    },
+    // 重置小恐龙状态
+    reset: function() {
+      this.yPos = this.groundYPos;
+      this.jumpVelocity = 0;
+      this.jumping = false;
+      this.ducking = false;
+      this.update(0, Trex.status.RUNNING);
+      this.speedDrop = false;
+      this.jumpCount = 0;
+    },
+    // 设置小恐龙为加速下落，立即取消当前的跳跃
+    setSpeedDrop: function() {
+      this.speedDrop = true;
+      this.jumpVelocity = 1;
+    },
+    // 设置小恐龙奔跑时是否躲闪
+    setDuck: function(isDucking) {
+      if (isDucking && this.status != Trex.status.DUCKING) { // 躲闪状态
+        this.update(0, Trex.status.DUCKING);
+        this.ducking = true;
+      } else if (this.status == Trex.status.DUCKING) {       // 奔跑状态
+        this.update(0, Trex.status.RUNNING);
+        this.ducking = false;
+      }
     },
   };
 
@@ -1286,11 +1621,5 @@
       }
       return duplicateCount >= Runner.config.MAX_OBSTACLE_DUPLICATION;
     },
-  };
-
-  function Trex() {}
-
-  Trex.config = {
-    WIDTH: 44,
   };
 })();
