@@ -14,9 +14,9 @@ body {
   top: calc(50% - 160px);
   left: calc(50% - 190px);
   width: 380px;
-  height: 320px;
   box-sizing: border-box;
-  padding: 60px 0;
+  padding: 50px 0;
+  overflow: hidden;
   text-align: center;
   background: #fff;
   opacity: 0.8;
@@ -41,11 +41,12 @@ canvas {
 }
 
 h1 {
-  margin: 12px 0;
+  margin: 12px 0 24px 0;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
   font-weight: 700;
   font-size: 40px;
   letter-spacing: 6px;
+  text-indent: -1em;
 }
 
 h2 {
@@ -57,18 +58,13 @@ h2 {
   white-space: nowrap;
 }
 
-h1,
-h2 {
-  position: relative;
-  line-height: 24px;
-}
-
 p {
   margin: 0;
   font-size: 16px;
   line-height: 2em;
   letter-spacing: 2px;
 }
+
 a {
   color: #999;
   text-decoration: none;
