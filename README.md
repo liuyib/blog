@@ -7,6 +7,10 @@
 - [Chrome 小恐龙游戏源码探究二 -- 让地面动起来](https://github.com/liuyib/liuyib.github.io/issues/5)
 - [Chrome 小恐龙游戏源码探究三 -- 进入街机模式](https://github.com/liuyib/liuyib.github.io/issues/6)
 - [Chrome 小恐龙游戏源码探究四 -- 随机绘制云朵](https://github.com/liuyib/liuyib.github.io/issues/7)
+- [Chrome 小恐龙游戏源码探究五 -- 随机绘制障碍](https://github.com/liuyib/liuyib.github.io/issues/8)
+- [Chrome 小恐龙游戏源码探究六 -- 记录游戏分数](https://github.com/liuyib/liuyib.github.io/issues/9)
+- [Chrome 小恐龙游戏源码探究七 -- 昼夜模式交替](https://github.com/liuyib/liuyib.github.io/issues/10)
+- [Chrome 小恐龙游戏源码探究八 -- 奔跑的小恐龙](https://github.com/liuyib/liuyib.github.io/issues/11)
 
 ## 学习笔记文章收录
 
