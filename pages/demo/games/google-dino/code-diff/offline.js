@@ -274,6 +274,10 @@
             this.inverted);
         }
 
+        // // 碰撞检测
+        // var collision = hasObstacles &&
+        //   checkForCollision(this.horizon.obstacles[0], this.tRex, this.ctx);
+
         this.distanceRan += this.currentSpeed * deltaTime / this.msPerFrame;
 
         if (this.currentSpeed < this.config.MAX_SPEED) {
@@ -311,6 +315,11 @@
       if (this.playing || (!this.activated &&
         this.tRex.blinkCount < Runner.config.MAX_BLINK_COUNT)) {
         this.tRex.update(deltaTime);
+
+        // 碰撞检测
+        var collision = hasObstacles &&
+          checkForCollision(this.horizon.obstacles[0], this.tRex, this.ctx);
+        
         // 进行下一次更新
         this.scheduleNextUpdate();
       }
@@ -664,6 +673,129 @@
   };
 
   /**
+   * 检测盒子是否碰撞
+   * @param {Object} obstacle 障碍物
+   * @param {Object} tRex 小恐龙
+   * @param {HTMLCanvasContext} opt_canvasCtx 画布上下文
+   */
+  function checkForCollision(obstacle, tRex, opt_canvasCtx) {
+    // 调整碰撞盒子的边界，因为小恐龙和障碍物有 1 像素的白边
+    var tRexBox = new CollisionBox(     // 小恐龙最外层的碰撞盒子
+        tRex.xPos + 1,
+        tRex.yPos + 1,
+        tRex.config.WIDTH - 2,
+        tRex.config.HEIGHT - 2);
+
+    var obstacleBox = new CollisionBox( // 障碍物最外层的碰撞盒子
+        obstacle.xPos + 1,
+        obstacle.yPos + 1,
+        obstacle.typeConfig.width * obstacle.size - 2,
+        obstacle.typeConfig.height - 2);
+
+    // 绘制调试边框
+    if (opt_canvasCtx) {
+      drawCollisionBoxes(opt_canvasCtx, tRexBox, obstacleBox);
+    }
+
+    // 检查最外层的盒子是否碰撞
+    if (boxCompare(tRexBox, obstacleBox)) {
+      var collisionBoxes = obstacle.collisionBoxes;
+
+      // 小恐龙有两种碰撞盒子，分别对应小恐龙站立状态和低头状态
+      var tRexCollisionBoxes = tRex.ducking ?
+          Trex.collisionBoxes.DUCKING : Trex.collisionBoxes.RUNNING;
+
+      // 检测里面小的盒子是否碰撞
+      for (var t = 0; t < tRexCollisionBoxes.length; t++) {
+        for (var i = 0; i < collisionBoxes.length; i++) {
+          // 调整碰撞盒子的实际位置（除去小恐龙和障碍物上 1 像素的白边）
+          var adjTrexBox =
+              createAdjustedCollisionBox(tRexCollisionBoxes[t], tRexBox);
+          var adjObstacleBox =
+              createAdjustedCollisionBox(collisionBoxes[i], obstacleBox);
+          var crashed = boxCompare(adjTrexBox, adjObstacleBox);
+
+          // 绘制调试边框
+          if (opt_canvasCtx) {
+            drawCollisionBoxes(opt_canvasCtx, adjTrexBox, adjObstacleBox);
+          }
+
+          if (crashed) {
+            return [adjTrexBox, adjObstacleBox];
+          }
+        }
+      }
+    }
+    return false;
+  };
+
+  /**
+   * 调整碰撞盒子
+   * @param {!CollisionBox} box 原始的盒子
+   * @param {!CollisionBox} adjustment 要调整成的盒子
+   * @return {CollisionBox} 被调整的盒子对象
+   */
+  function createAdjustedCollisionBox(box, adjustment) {
+    return new CollisionBox(
+      box.x + adjustment.x,
+      box.y + adjustment.y,
+      box.width,
+      box.height);
+  };
+
+  /**
+   * 绘制碰撞盒子的边框
+   * @param {HTMLCanvasContext} canvasCtx canvas 上下文
+   * @param {CollisionBox} tRexBox 小恐龙的碰撞盒子
+   * @param {CollisionBox} obstacleBox 障碍物的碰撞盒子
+   */
+  function drawCollisionBoxes(canvasCtx, tRexBox, obstacleBox) {
+    canvasCtx.save();
+    canvasCtx.strokeStyle = '#f00';
+    canvasCtx.strokeRect(tRexBox.x, tRexBox.y, tRexBox.width, tRexBox.height);
+
+    canvasCtx.strokeStyle = '#0f0';
+    canvasCtx.strokeRect(obstacleBox.x, obstacleBox.y,
+        obstacleBox.width, obstacleBox.height);
+    canvasCtx.restore();
+  };
+
+  /**
+   * 比较两个矩形是否相交
+   * @param {CollisionBox} tRexBox 小恐龙的碰撞盒子
+   * @param {CollisionBox} obstacleBox 障碍物的碰撞盒子
+   */
+  function boxCompare(tRexBox, obstacleBox) {
+    var crashed = false;
+
+    // 两个矩形相交
+    if (tRexBox.x < obstacleBox.x + obstacleBox.width &&
+        tRexBox.x + tRexBox.width > obstacleBox.x &&
+        tRexBox.y < obstacleBox.y + obstacleBox.height &&
+        tRexBox.height + tRexBox.y > obstacleBox.y) {
+      crashed = true;
+    }
+
+    return crashed;
+  };
+
+  /**
+   * 用于生成碰撞盒子
+   * @param {Number} x X 坐标
+   * @param {Number} y Y坐标
+   * @param {Number} w 宽度
+   * @param {Number} h 高度
+   */
+  function CollisionBox(x, y, w, h) {
+    this.x = x;
+    this.y = y;
+    this.width = w;
+    this.height = h;
+  };
+
+  
+
+  /**
    * 障碍物类
    * @param {HTMLCanvasElement} canvas 画布
    * @param {String} type 障碍物类型
@@ -685,7 +817,7 @@
   
     // 每组障碍物的数量（随机 1~3 个）
     this.size = getRandomNum(1, Obstacle.MAX_OBSTACLE_LENGTH);
-  
+    this.collisionBoxes = []; // 存储碰撞盒子
     this.xPos = dimensions.WIDTH + (opt_xOffset || 0);
     this.yPos = 0;
   
@@ -711,6 +843,11 @@
     multipleSpeed: 4,
     minGap: 120,           // 最小间距
     minSpeed: 0,           // 最低速度
+    collisionBoxes: [      // 碰撞盒子
+      new CollisionBox(0, 7, 5, 27),
+      new CollisionBox(4, 0, 6, 34),
+      new CollisionBox(10, 4, 7, 14),
+    ],
   }, {
     type: 'CACTUS_LARGE',  // 大仙人掌
     width: 25,
@@ -719,6 +856,11 @@
     multipleSpeed: 7,
     minGap: 120,
     minSpeed: 0,
+    collisionBoxes: [      // 碰撞盒子
+      new CollisionBox(0, 12, 7, 38),
+      new CollisionBox(8, 0, 7, 49),
+      new CollisionBox(13, 10, 10, 38),
+    ],
   }, {
     type: 'PTERODACTYL',   // 翼龙
     width: 46,
@@ -730,10 +872,19 @@
     numFrames: 2,          // 两个动画帧  
     frameRate: 1000 / 6,   // 帧率（一帧的时间）
     speedOffset: 0.8,      // 速度修正
+    collisionBoxes: [      // 碰撞盒子
+      new CollisionBox(15, 15, 16, 5),
+      new CollisionBox(18, 21, 24, 6),
+      new CollisionBox(2, 14, 4, 3),
+      new CollisionBox(6, 10, 4, 7),
+      new CollisionBox(10, 8, 6, 9),
+    ],
   }];
 
   Obstacle.prototype = {
     init: function (speed) {
+      this.cloneCollisionBoxes(); 
+
       // 这里是为了确保刚开始游戏速度慢时，不会生成较大的障碍物和翼龙
       // 否则速度慢时，生成较大的障碍物或翼龙是跳不过去的
       if (this.size > 1 && this.typeConfig.multipleSpeed > speed) {
@@ -752,6 +903,19 @@
       }
   
       this.draw();
+
+      // 调整中间的碰撞盒子的大小
+      //      ____        ______        ________
+      //    _|   |-|    _|     |-|    _|       |-|
+      //   | |<->| |   | |<--->| |   | |<----->| |
+      //   | | 1 | |   | |  2  | |   | |   3   | |
+      //   |_|___|_|   |_|_____|_|   |_|_______|_|
+      //
+      if (this.size > 1) {
+        this.collisionBoxes[1].width = this.width - this.collisionBoxes[0].width -
+            this.collisionBoxes[2].width;
+        this.collisionBoxes[2].x = this.width - this.collisionBoxes[2].width;
+      }
       
       // 对于速度与地面不同的障碍物（翼龙）进行速度修正
       // 使得有的速度看起来快一些，有的看起来慢一些
@@ -828,6 +992,16 @@
     isVisible: function () {
       return this.xPos + this.width > 0;
     },
+    // 复制碰撞盒子
+    cloneCollisionBoxes: function() {
+      var collisionBoxes = this.typeConfig.collisionBoxes;
+
+      for (var i = collisionBoxes.length - 1; i >= 0; i--) {
+        this.collisionBoxes[i] = new CollisionBox(collisionBoxes[i].x,
+          collisionBoxes[i].y, collisionBoxes[i].width,
+          collisionBoxes[i].height);
+      }
+    },
   };
 
   /**
@@ -882,6 +1056,21 @@
   };
   
   Trex.BLINK_TIMING = 7000;     // 眨眼最大间隔的时间
+
+  // 小恐龙的碰撞盒子
+  Trex.collisionBoxes = {
+    DUCKING: [
+      new CollisionBox(1, 18, 55, 25)
+    ],
+    RUNNING: [
+      new CollisionBox(22, 0, 17, 16),
+      new CollisionBox(1, 18, 30, 9),
+      new CollisionBox(10, 35, 14, 8),
+      new CollisionBox(1, 24, 29, 5),
+      new CollisionBox(5, 30, 21, 4),
+      new CollisionBox(9, 34, 15, 4)
+    ]
+  };
   
   // 小恐龙的状态
   Trex.status = {
