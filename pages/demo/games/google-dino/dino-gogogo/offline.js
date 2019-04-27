@@ -55,7 +55,7 @@
     MAX_OBSTACLE_DUPLICATION: 2,           // 障碍物相邻的最大重复数
     CLEAR_TIME: 3000,                      // 游戏开始后，等待三秒再绘制障碍物
     INVERT_FADE_DURATION: 12000,           // 夜晚模式的持续时间
-    INVERT_DISTANCE: 100,                  // 触发夜晚模式的距离
+    INVERT_DISTANCE: 700,                  // 触发夜晚模式的距离
     BOTTOM_PAD: 10,                        // 小恐龙距 canvas 底部的距离
     MAX_BLINK_COUNT: 3,                    // 小恐龙的最大眨眼次数
   };
