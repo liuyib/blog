@@ -58,6 +58,7 @@
     INVERT_DISTANCE: 700,                  // 触发夜晚模式的距离
     BOTTOM_PAD: 10,                        // 小恐龙距 canvas 底部的距离
     MAX_BLINK_COUNT: 3,                    // 小恐龙的最大眨眼次数
+    GAMEOVER_CLEAR_TIME: 750,              // 游戏结束后，允许使用跳跃键重新开始游戏的最短时间
   };
   
   // 游戏画布的默认尺寸
@@ -449,6 +450,15 @@
       } else if (Runner.keyCodes.DUCK[keyCode]) { // 躲避状态
         this.tRex.speedDrop = false;
         this.tRex.setDuck(false);
+      } else if (this.crashed) {
+        var deltaTime = getTimeStamp() - this.time;
+  
+        // 按下回车键或者等待 750 毫秒后，按下空格键，重新开始游戏
+        if (Runner.keyCodes.RESTART[keyCode] ||
+            (deltaTime >= this.config.GAMEOVER_CLEAR_TIME &&
+            Runner.keyCodes.JUMP[keyCode])) {
+          this.restart();
+        }
       }
     },
     // 是否游戏正在进行
@@ -457,6 +467,25 @@
     },
     setPlayStatus: function (isPlaying) {
       this.playing = isPlaying;
+    },
+    // 重新开始游戏
+    restart: function() {
+      if (!this.raqId) {
+        this.runningTime = 0;
+        this.setPlayStatus(true);
+        this.paused = false;
+        this.crashed = false;
+        this.distanceRan = 0;
+        this.currentSpeed = this.config.SPEED;
+        this.time = getTimeStamp();
+        this.clearCanvas();
+        this.distanceMeter.reset();
+        this.horizon.reset();
+        this.tRex.reset();
+        // this.playSound(this.soundFx.BUTTON_PRESS);
+        this.invert(true);
+        this.update();
+      }
     },
   };
   
@@ -668,6 +697,10 @@
      */
     getRandomType: function () {
       return Math.random() > this.bumpThreshold ? this.dimensions.WIDTH : 0;
+    },
+    reset: function() {
+      this.xPos[0] = 0;
+      this.xPos[1] = HorizonLine.dimensions.WIDTH;
     },
   };
 
@@ -1576,6 +1609,11 @@
       // 分数前面字母 H、I 在雪碧图中位于数字后面，也就是第 10、11 位置
       this.highScore = ['10', '11', ''].concat(highScoreStr.split(''));
     },
+    // 重置当前分数为 '00000'
+    reset: function() {
+      this.update(0);
+      this.achievement = false;
+    }
   };
 
   /**
@@ -1727,6 +1765,11 @@
         this.stars[i].sourceY = Runner.spriteDefinition.LDPI.STAR.y +
             NightMode.config.STAR_SIZE * i;
       }
+    },
+    reset: function() {
+      this.currentPhase = 0;
+      this.opacity = 0;
+      this.update(false);
     },
   };
 
@@ -1886,6 +1929,12 @@
             duplicateCount + 1 : 0;
       }
       return duplicateCount >= Runner.config.MAX_OBSTACLE_DUPLICATION;
+    },
+    // 重置背景类
+    reset: function() {
+      this.obstacles = [];
+      this.horizonLine.reset();
+      this.nightMode.reset();
     },
   };
 })();
