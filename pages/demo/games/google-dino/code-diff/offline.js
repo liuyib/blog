@@ -34,6 +34,9 @@
     this.playing = false;                  // 游戏是否进行中
     this.crashed = false;                  // 小恐龙是否碰到了障碍物
     this.paused = false                    // 游戏是否暂停
+
+    this.soundFx = {};        // 存储音频数据
+    this.audioContext = null; // 音频上下文
   
     // 加载雪碧图，并初始化游戏
     this.loadImages();
@@ -59,6 +62,7 @@
     BOTTOM_PAD: 10,                        // 小恐龙距 canvas 底部的距离
     MAX_BLINK_COUNT: 3,                    // 小恐龙的最大眨眼次数
     GAMEOVER_CLEAR_TIME: 750,              // 游戏结束后，允许使用跳跃键重新开始游戏的最短时间
+    RESOURCE_TEMPLATE_ID: 'audio-resources', // 音频元素父元素 template 的 ID
   };
   
   // 游戏画布的默认尺寸
@@ -109,6 +113,13 @@
     FOCUS: 'focus'
   };
 
+  // 音频元素的 ID
+  Runner.sounds = {
+    BUTTON_PRESS: 'offline-sound-press',
+    HIT: 'offline-sound-hit',
+    SCORE: 'offline-sound-reached'
+  };
+
   Runner.prototype = {
     init: function () {
       // 生成 canvas 容器元素
@@ -156,6 +167,26 @@
       } else { // 图片没有加载完成，监听其 load 事件
         Runner.imageSprite.addEventListener(Runner.events.LOAD,
           this.init.bind(this));
+      }
+    },
+    // 加载音频文件
+    loadSounds: function () {
+      this.audioContext = new AudioContext();
+
+      var resourceTemplate =
+        document.getElementById(this.config.RESOURCE_TEMPLATE_ID).content;
+
+      for (var sound in Runner.sounds) {
+        var soundSrc =
+          resourceTemplate.getElementById(Runner.sounds[sound]).src;
+        soundSrc = soundSrc.substr(soundSrc.indexOf(',') + 1);
+        var buffer = decodeBase64ToArrayBuffer(soundSrc);
+
+        // 异步，不能保证数组中元素的顺序
+        this.audioContext.decodeAudioData(buffer, function (index, audioData) {
+          // 存储音频数据
+          this.soundFx[index] = audioData;
+        }.bind(this, sound));
       }
     },
     startListening: function () {
@@ -239,6 +270,18 @@
       this.raqId = 0;
     },
     /**
+     * 播放音频
+     * @param {SoundBuffer} 音频的 Buffer
+     */
+    playSound: function (soundBuffer) {
+      if (soundBuffer) {
+        var sourceNode = this.audioContext.createBufferSource();
+        sourceNode.buffer = soundBuffer;
+        sourceNode.connect(this.audioContext.destination);
+        sourceNode.start(0);
+      }
+    },
+    /**
      * 更新游戏帧并进行下一次更新
      */
     update: function () {
@@ -290,6 +333,10 @@
         var playAchievementSound = this.distanceMeter.update(deltaTime,
           Math.ceil(this.distanceRan));
 
+        if (playAchievementSound) {
+          this.playSound(this.soundFx.SCORE);
+        }
+
         // 夜晚模式
         if (this.invertTimer > this.config.INVERT_FADE_DURATION) { // 夜晚模式结束
           this.invertTimer = 0;
@@ -334,6 +381,8 @@
     },
     // 游戏结束
     gameOver: function () {
+      this.playSound(this.soundFx.HIT);
+
       this.stop();
       this.crashed = true;                    // 小恐龙撞到了障碍物
       this.distanceMeter.achievement = false; // 结束分数闪动特效
@@ -422,12 +471,14 @@
           e.preventDefault();
   
           if (!this.playing) {
+            this.loadSounds();
             this.setPlayStatus(true);
             this.update();
           }
 
           // 开始跳跃
           if (!this.tRex.jumping && !this.tRex.ducking) {
+            this.playSound(this.soundFx.BUTTON_PRESS);
             this.tRex.startJump(this.currentSpeed);
           }
         } else if (this.playing && Runner.keyCodes.DUCK[e.keyCode]) {
@@ -482,7 +533,7 @@
         this.distanceMeter.reset();
         this.horizon.reset();
         this.tRex.reset();
-        // this.playSound(this.soundFx.BUTTON_PRESS);
+        this.playSound(this.soundFx.BUTTON_PRESS);
         this.invert(true);
         this.update();
       }
@@ -528,6 +579,22 @@
     return Math.floor(Math.random() * (max - min + 1)) + min;
   }
 
+  /**
+   * 将 base64编码转为 ArrayBuffer
+   * @param {String} base64String Base64 字符串
+   */
+  function decodeBase64ToArrayBuffer(base64String) {
+    var len = (base64String.length / 4) * 3;
+    var str = atob(base64String);
+    var arrayBuffer = new ArrayBuffer(len);
+    var bytes = new Uint8Array(arrayBuffer);
+
+    for (var i = 0; i < len; i++) {
+      bytes[i] = str.charCodeAt(i);
+    }
+    return bytes.buffer;
+  }
+  
   // ==========================================
 
   /**
