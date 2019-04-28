@@ -9,6 +9,10 @@
   box-sizing: border-box;
 }
 
+p {
+  text-align: center;
+}
+
 body {
   transition: filter 1.5s cubic-bezier(0.65, 0.05, 0.36, 1),
               background-color 1.5s cubic-bezier(0.65, 0.05, 0.36, 1);
