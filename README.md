@@ -11,6 +11,8 @@
 - [Chrome 小恐龙游戏源码探究六 -- 记录游戏分数](https://github.com/liuyib/liuyib.github.io/issues/9)
 - [Chrome 小恐龙游戏源码探究七 -- 昼夜模式交替](https://github.com/liuyib/liuyib.github.io/issues/10)
 - [Chrome 小恐龙游戏源码探究八 -- 奔跑的小恐龙](https://github.com/liuyib/liuyib.github.io/issues/11)
+- [Chrome 小恐龙游戏源码探究九 -- 游戏碰撞检测](https://github.com/liuyib/liuyib.github.io/issues/12)
+- [Chrome 小恐龙游戏源码探究完 -- 游戏结束和其他要素](https://github.com/liuyib/liuyib.github.io/issues/13)
 
 ## 学习笔记文章收录
 
