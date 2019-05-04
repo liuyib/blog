@@ -13,6 +13,11 @@ li {
   list-style: none;
 }
 
+.text {
+  color: #e2e2e2;
+  text-align: center;
+}
+
 .slider_wrapper {
   width: 1200px;
   margin: 0 auto;
