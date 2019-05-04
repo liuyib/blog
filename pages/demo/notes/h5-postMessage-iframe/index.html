@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>index</title>
+</head>
+<body>
+  <div>发送窗口</div>
+  <button id="button">点击发送数据</button>
+
+  <hr>
+
+  <div>接收窗口</div>
+  <iframe id="iframe" src="https://liuyib.github.io/pages/demo/notes/h5-postMessage-iframe/test.html"></iframe>
+
+  <script>
+    var button = document.getElementById('button');
+    var win = document.getElementById('iframe').contentWindow;
+
+    button.onclick = function () {
+      win.postMessage('hello world');
+    };
+  </script>
+</body>
+</html>
