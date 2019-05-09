@@ -14,12 +14,4 @@
 - [Chrome 小恐龙游戏源码探究九 -- 游戏碰撞检测](https://github.com/liuyib/liuyib.github.io/issues/12)
 - [Chrome 小恐龙游戏源码探究完 -- 游戏结束和其他要素](https://github.com/liuyib/liuyib.github.io/issues/13)
 
-## 学习笔记文章收录
-
-- [纯 CSS 实现进度条效果](https://github.com/liuyib/study-note/issues/1)
-- [为什么会有 OPTIONS 预请求 - CORS 跨域](https://github.com/liuyib/study-note/issues/2)
-- [去除 Chrome 中 input 框自动填充的黄色背景](https://github.com/liuyib/study-note/issues/3)
-- [纯 CSS 导航栏下划线跟随效果](https://github.com/liuyib/study-note/issues/5)
-- [原生JS实现基于用户行为预测的无延迟二级菜单](https://github.com/liuyib/study-note/issues/6)
-
 觉得文章有用的话，留个 star 呗~ :heart:
