@@ -1,3 +1,5 @@
+这是旧版博客地址，现博客已搬家到：[https://liuyib.github.io/](https://liuyib.github.io/)
+
 ## 博客文章收录
 
 - [用面向数据的思想实现3D旋转轮播图](https://github.com/liuyib/blog/issues/1)
