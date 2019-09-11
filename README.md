@@ -15,5 +15,3 @@
 - [Chrome 小恐龙游戏源码探究八 -- 奔跑的小恐龙](https://github.com/liuyib/blog/issues/11)
 - [Chrome 小恐龙游戏源码探究九 -- 游戏碰撞检测](https://github.com/liuyib/blog/issues/12)
 - [Chrome 小恐龙游戏源码探究完 -- 游戏结束和其他要素](https://github.com/liuyib/blog/issues/13)
-
-觉得文章有用的话，留个 star 呗~ :heart:
